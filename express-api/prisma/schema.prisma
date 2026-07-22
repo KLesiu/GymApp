@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TRAINEE
+  TRAINER
+}
+
+enum WorkoutStatus {
+  DRAFT
+  FINALIZED
+}
+
+enum WeightUnit {
+  KILOGRAMS
+  POUNDS
+}
+
+enum MuscleRegion {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CORE
+  CALVES
+  CUSTOM
+}
+
+enum ExerciseEloFormula {
+  STANDARD
+  STRENGTH
+  VOLUME
+  PULLUP_INVERSE
+}
+
+enum TrainerRelationshipStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  DETACHED
+}
+
+enum ReportFieldType {
+  TEXT
+  NUMBER
+  SCALE
+}
+
+enum ReportAssignmentStatus {
+  PENDING
+  SUBMITTED
+  REVIEWED
+}
+
+enum RecurrenceUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+enum MeasurementUnit {
+  KG
+  CM
+  PERCENT
+}
+
+enum BodyPart {
+  WEIGHT
+  BODY_FAT
+  CHEST
+  WAIST
+  HIPS
+  THIGH
+  ARM
+}
+
+model User {
+  id                  String                @id @default(uuid()) @db.Uuid
+  name                String                @unique
+  email               String                @unique
+  passwordHash        String
+  preferredTimeZone   String                @default("UTC")
+  isVisibleInRanking  Boolean               @default(true)
+  elo                 Int                   @default(1000)
+  deletedAt           DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  roles               UserRole[]
+  gyms                Gym[]
+  muscleGroups        MuscleGroup[]
+  exercises           Exercise[]
+  plans               Plan[]                @relation("PlanOwner")
+  assignedPlans       PlanAssignment[]      @relation("AssignedTrainee")
+  trainerAssignments  PlanAssignment[]      @relation("AssignedTrainer")
+  workoutSessions     WorkoutSession[]
+  measurements        BodyMeasurement[]
+  traineeLinks        TrainerRelationship[] @relation("TrainerLinks")
+  trainerLinks        TrainerRelationship[] @relation("TraineeLinks")
+  reportTemplates     ReportTemplate[]
+  trainerAssignments2 ReportAssignment[]    @relation("ReportTrainer")
+  traineeAssignments2 ReportAssignment[]    @relation("ReportTrainee")
+  reportSubmissions   ReportSubmission[]
+  recurringTrainerRules RecurringReportRule[] @relation("RecurringTrainer")
+  recurringTraineeRules RecurringReportRule[] @relation("RecurringTrainee")
+  eloHistory          EloHistory[]
+  idempotencyKeys     IdempotencyKey[]
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+
+model Gym {
+  id         String           @id @default(uuid()) @db.Uuid
+  ownerId    String           @db.Uuid
+  name       String
+  address    String
+  deletedAt  DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  owner      User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  workouts   WorkoutSession[]
+
+  @@index([ownerId, deletedAt])
+}
+
+model MuscleGroup {
+  id        String       @id @default(uuid()) @db.Uuid
+  ownerId   String       @db.Uuid
+  name      String
+  region    MuscleRegion
+  createdAt DateTime     @default(now())
+  owner     User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  exercises Exercise[]
+
+  @@unique([ownerId, name])
+}
+
+model Exercise {
+  id            String              @id @default(uuid()) @db.Uuid
+  ownerId       String              @db.Uuid
+  muscleGroupId String              @db.Uuid
+  name          String
+  formula       ExerciseEloFormula  @default(STANDARD)
+  createdAt     DateTime            @default(now())
+  owner         User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  muscleGroup   MuscleGroup         @relation(fields: [muscleGroupId], references: [id], onDelete: Restrict)
+  planExercises PlanExercise[]
+  workoutSets   WorkoutSet[]
+  eloHistory    EloHistory[]
+
+  @@unique([ownerId, name])
+}
+
+model Plan {
+  id          String           @id @default(uuid()) @db.Uuid
+  ownerId     String           @db.Uuid
+  name        String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  owner       User             @relation("PlanOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  days        PlanDay[]
+  workouts    WorkoutSession[]
+  assignments PlanAssignment[]
+
+  @@index([ownerId, createdAt])
+}
+
+model PlanDay {
+  id          String         @id @default(uuid()) @db.Uuid
+  planId      String         @db.Uuid
+  name        String
+  orderIndex  Int
+  createdAt   DateTime       @default(now())
+  plan        Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercises   PlanExercise[]
+  workouts    WorkoutSession[]
+
+  @@unique([planId, orderIndex])
+}
+
+model PlanExercise {
+  id         String   @id @default(uuid()) @db.Uuid
+  planDayId   String   @db.Uuid
+  exerciseId String   @db.Uuid
+  series     Int
+  repsTarget Int
+  orderIndex Int
+  planDay    PlanDay  @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+}
+
+model PlanAssignment {
+  id          String   @id @default(uuid()) @db.Uuid
+  planId       String   @db.Uuid
+  trainerId    String   @db.Uuid
+  traineeId    String   @db.Uuid
+  isActive     Boolean  @default(true)
+  assignedAt   DateTime @default(now())
+  plan         Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  trainer      User     @relation("AssignedTrainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainee      User     @relation("AssignedTrainee", fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId, isActive])
+}
+
+model WorkoutSession {
+  id                         String         @id @default(uuid()) @db.Uuid
+  userId                     String         @db.Uuid
+  gymId                      String         @db.Uuid
+  planId                     String?        @db.Uuid
+  planDayId                  String?        @db.Uuid
+  status                     WorkoutStatus  @default(DRAFT)
+  startedAt                  DateTime
+  completedAt                DateTime?
+  finalizedIdempotencyKeyId  String?        @unique @db.Uuid
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+  user                       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gym                        Gym            @relation(fields: [gymId], references: [id], onDelete: Restrict)
+  plan                       Plan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
+  planDay                    PlanDay?       @relation(fields: [planDayId], references: [id], onDelete: SetNull)
+  sets                       WorkoutSet[]
+  eloHistory                 EloHistory[]
+  finalizedIdempotencyKey    IdempotencyKey? @relation(fields: [finalizedIdempotencyKeyId], references: [id], onDelete: SetNull)
+
+  @@index([userId, gymId, status, completedAt])
+  @@index([userId, completedAt])
+}
+
+model WorkoutSet {
+  id               String       @id @default(uuid()) @db.Uuid
+  workoutSessionId String       @db.Uuid
+  exerciseId       String       @db.Uuid
+  series           Int
+  reps             Int
+  weight           Decimal      @db.Decimal(10, 2)
+  unit             WeightUnit
+  createdAt        DateTime     @default(now())
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise         Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@index([exerciseId, series])
+  @@index([workoutSessionId, exerciseId, series])
+}
+
+model BodyMeasurement {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId     String          @db.Uuid
+  bodyPart   BodyPart
+  unit       MeasurementUnit
+  value      Decimal         @db.Decimal(10, 2)
+  takenAt    DateTime
+  createdAt  DateTime        @default(now())
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bodyPart, takenAt])
+}
+
+model TrainerRelationship {
+  id          String                    @id @default(uuid()) @db.Uuid
+  trainerId    String                    @db.Uuid
+  traineeId    String                    @db.Uuid
+  status       TrainerRelationshipStatus @default(PENDING)
+  createdAt    DateTime                  @default(now())
+  activatedAt  DateTime?
+  detachedAt   DateTime?
+  trainer      User                      @relation("TrainerLinks", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainee      User                      @relation("TraineeLinks", fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, traineeId])
+  @@index([traineeId, status])
+}
+
+model ReportTemplate {
+  id          String                 @id @default(uuid()) @db.Uuid
+  trainerId    String                 @db.Uuid
+  name         String
+  description  String?
+  createdAt    DateTime               @default(now())
+  trainer      User                   @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  versions     ReportTemplateVersion[]
+  assignments  ReportAssignment[]
+  recurringRules RecurringReportRule[]
+}
+
+model ReportTemplateVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId   String   @db.Uuid
+  version      Int
+  snapshotJson Json
+  createdAt    DateTime @default(now())
+  template     ReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  assignments  ReportAssignment[]
+
+  @@unique([templateId, version])
+}
+
+model ReportAssignment {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  trainerId           String                 @db.Uuid
+  traineeId           String                 @db.Uuid
+  templateId          String                 @db.Uuid
+  templateVersionId   String                 @db.Uuid
+  recurringRuleId     String?                @db.Uuid
+  dueAt               DateTime?
+  note                String?
+  status              ReportAssignmentStatus @default(PENDING)
+  createdAt           DateTime               @default(now())
+  submittedAt         DateTime?
+  trainer             User                   @relation("ReportTrainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainee             User                   @relation("ReportTrainee", fields: [traineeId], references: [id], onDelete: Cascade)
+  template            ReportTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersion     ReportTemplateVersion  @relation(fields: [templateVersionId], references: [id], onDelete: Restrict)
+  recurringRule       RecurringReportRule?   @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  submission          ReportSubmission?
+
+  @@index([traineeId, status, dueAt])
+}
+
+model ReportSubmission {
+  id                     String   @id @default(uuid()) @db.Uuid
+  assignmentId           String   @unique @db.Uuid
+  traineeId              String   @db.Uuid
+  payloadJson            Json
+  submittedAt            DateTime @default(now())
+  trainerOverallComment  String?
+  trainerFieldCommentsJson Json?
+  feedbackReadAt         DateTime?
+  assignment             ReportAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  trainee                User     @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+}
+
+model RecurringReportRule {
+  id            String         @id @default(uuid()) @db.Uuid
+  trainerId      String         @db.Uuid
+  traineeId      String         @db.Uuid
+  templateId     String         @db.Uuid
+  intervalUnit   RecurrenceUnit
+  intervalValue  Int
+  startsAt       DateTime
+  endsAt         DateTime?
+  nextRunAt      DateTime
+  pausedAt       DateTime?
+  createdAt      DateTime       @default(now())
+  trainer        User           @relation("RecurringTrainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainee        User           @relation("RecurringTrainee", fields: [traineeId], references: [id], onDelete: Cascade)
+  template       ReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  assignments    ReportAssignment[]
+}
+
+model EloHistory {
+  id               String             @id @default(uuid()) @db.Uuid
+  userId           String             @db.Uuid
+  workoutSessionId String             @db.Uuid
+  exerciseId       String             @db.Uuid
+  previousElo      Int
+  gain             Int
+  newElo           Int
+  formula          ExerciseEloFormula
+  score            Decimal            @db.Decimal(12, 4)
+  previousScore    Decimal?           @db.Decimal(12, 4)
+  createdAt        DateTime           @default(now())
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutSession   WorkoutSession     @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise         Exercise           @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([workoutSessionId, exerciseId])
+  @@index([userId, createdAt])
+}
+
+model IdempotencyKey {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  scope        String
+  key          String
+  statusCode   Int
+  responseJson Json
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout      WorkoutSession?
+
+  @@unique([userId, scope, key])
+}
