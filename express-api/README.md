@@ -76,3 +76,4 @@ Swagger UI: `http://localhost:3000/docs`
 ## Documentation
 
 - `docs/architecture.md`
+- `docs/api-reference.md`
