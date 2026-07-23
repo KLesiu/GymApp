@@ -1,0 +1,23 @@
+# Local automation/tooling state
+.omo/
+.opencode/
+.claude/
+.cursor/
+tools/
+AGENTS.local.md
+*.local.md
+
+# Mobile local artifacts
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/.env
+mobile/.env.local
+mobile/.env.*.local
+mobile/expo-env.d.ts
+
+# Backend local artifacts
+express-api/node_modules/
+express-api/dist/
+express-api/.env

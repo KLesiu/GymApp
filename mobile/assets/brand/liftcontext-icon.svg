@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">LiftContext application icon</title>
+  <desc id="description">
+    A barbell framed by teal comparison brackets with a yellow contextual data point.
+  </desc>
+
+  <rect width="512" height="512" rx="112" fill="#FAFAF7"/>
+
+  <path
+    d="M164 92H116C98.327 92 84 106.327 84 124V388C84 405.673 98.327 420 116 420H164"
+    fill="none"
+    stroke="#15988F"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M348 92H396C413.673 92 428 106.327 428 124V388C428 405.673 413.673 420 396 420H348"
+    fill="none"
+    stroke="#15988F"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <rect x="136" y="240" width="240" height="32" rx="16" fill="#1D2225"/>
+  <rect x="126" y="222" width="22" height="68" rx="8" fill="#1D2225"/>
+  <rect x="156" y="178" width="34" height="156" rx="12" fill="#1D2225"/>
+  <rect x="200" y="204" width="26" height="104" rx="10" fill="#1D2225"/>
+  <rect x="364" y="222" width="22" height="68" rx="8" fill="#1D2225"/>
+  <rect x="322" y="178" width="34" height="156" rx="12" fill="#1D2225"/>
+  <rect x="286" y="204" width="26" height="104" rx="10" fill="#1D2225"/>
+
+  <circle cx="256" cy="256" r="18" fill="#FFC928"/>
+</svg>
