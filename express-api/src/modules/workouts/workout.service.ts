@@ -15,15 +15,37 @@ export class WorkoutService {
 
   async createDraft(userId: string, input: Parameters<WorkoutRepository["createDraft"]>[1]) {
     await this.accessService.assertGymOwner(userId, input.gymId)
-    return this.repository.createDraft(userId, input)
+    return this.mapWorkout(await this.repository.createDraft(userId, input))
   }
 
-  async finalize(userId: string, workoutId: string, idempotencyKey: string) {
+  async updateSets(
+    userId: string,
+    workoutId: string,
+    input: Parameters<WorkoutRepository["updateSets"]>[2],
+  ) {
+    const workout = await this.repository.updateSets(userId, workoutId, input)
+    if (!workout) {
+      throw new NotFoundError("WORKOUT_NOT_FOUND")
+    }
+    return this.mapWorkout(workout)
+  }
+
+  async finalize(
+    userId: string,
+    workoutId: string,
+    idempotencyKey: string,
+    input?: Parameters<WorkoutRepository["finalizeWorkout"]>[3],
+  ) {
     if (!idempotencyKey) {
       throw new ForbiddenError("IDEMPOTENCY_KEY_REQUIRED")
     }
 
-    const finalized = await this.repository.finalizeWorkout(userId, workoutId, idempotencyKey)
+    const finalized = await this.repository.finalizeWorkout(
+      userId,
+      workoutId,
+      idempotencyKey,
+      input,
+    )
     return finalized.payload.responseJson
   }
 
@@ -48,20 +70,27 @@ export class WorkoutService {
   }
 
   async getHistoryDetail(userId: string, workoutId: string) {
-    const workout = await this.repository.findFinalized(userId, workoutId)
+    const workout = await this.repository.findWorkout(userId, workoutId)
     if (!workout) {
       throw new NotFoundError("WORKOUT_NOT_FOUND")
     }
 
+    return this.mapWorkout(workout)
+  }
+
+  private mapWorkout(workout: NonNullable<Awaited<ReturnType<WorkoutRepository["findWorkout"]>>>) {
     return {
       _id: workout.id,
       id: workout.id,
+      status: workout.status,
       createdAt: workout.startedAt,
       completedAt: workout.completedAt,
+      gymId: workout.gymId,
       gym: workout.gym.name,
       planDay: workout.planDay ? { _id: workout.planDay.id, name: workout.planDay.name } : null,
       exercises: workout.sets.map((set) => ({
         _id: set.id,
+        id: set.id,
         exerciseId: set.exerciseId,
         exerciseName: set.exercise.name,
         series: set.series,

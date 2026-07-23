@@ -90,6 +90,57 @@ describeAcceptance("workout ranking acceptance", (environment, register) => {
     expect(history).toHaveLength(1)
   })
 
+  it("finalizes the submitted set form instead of stale draft sets", async () => {
+    const user = await register("form-source-user", "form-source-user@example.com")
+    const exercise = await createExercise(environment, user.token, "Form Bench", "CHEST", "STANDARD")
+    const gym = await authRequest(environment.client.post("/api/v1/gyms"), user.token).send({
+      name: "Form Gym",
+      address: "Address",
+    })
+    const workout = await authRequest(environment.client.post("/api/v1/workouts"), user.token).send(
+      {
+        gymId: gym.body._id,
+        startedAt: new Date("2026-01-04T10:00:00.000Z").toISOString(),
+        sets: [
+          { exerciseId: exercise.body._id, series: 1, reps: 10, weight: 100, unit: "KILOGRAMS" },
+          { exerciseId: exercise.body._id, series: 2, reps: 12, weight: 120, unit: "KILOGRAMS" },
+          { exerciseId: exercise.body._id, series: 3, reps: 10, weight: 0, unit: "KILOGRAMS" },
+        ],
+      },
+    )
+
+    const finalize = await authRequest(
+      environment.client.post(`/api/v1/workouts/${workout.body.id}/finalize`),
+      user.token,
+    )
+      .set("Idempotency-Key", "form-source-finalize")
+      .send({
+        sets: [
+          {
+            id: workout.body.exercises[0].id,
+            exerciseId: exercise.body._id,
+            series: 1,
+            reps: 10,
+            weight: 100,
+            unit: "KILOGRAMS",
+          },
+          {
+            id: workout.body.exercises[1].id,
+            exerciseId: exercise.body._id,
+            series: 2,
+            reps: 12,
+            weight: 120,
+            unit: "KILOGRAMS",
+          },
+        ],
+      })
+    const history = await authRequest(environment.client.get("/api/v1/workouts"), user.token)
+
+    expect(finalize.status).toBe(200)
+    expect(history.body[0].exercises).toHaveLength(2)
+    expect(history.body[0].exercises.map((set: { series: number }) => set.series)).toEqual([1, 2])
+  })
+
   it("paginates ranking", async () => {
     await register("rank-1", "rank-1@example.com")
     await register("rank-2", "rank-2@example.com")
@@ -167,6 +218,7 @@ const createExercise = async (
   })
   return authRequest(environment.client.post("/api/v1/exercises"), token).send({
     name,
+    bodyPart: region,
     muscleGroupId: muscleGroup.body._id,
     formula,
   })

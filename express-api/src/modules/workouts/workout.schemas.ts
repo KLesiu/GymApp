@@ -18,4 +18,26 @@ export const createWorkoutSchema = z.object({
   sets: z.array(workoutSetSchema).min(1),
 })
 
+export const updateWorkoutSetsSchema = z.object({
+  sets: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(),
+        exerciseId: z.string().uuid(),
+        series: z.number().int().positive(),
+        reps: z.number().int().positive(),
+        weight: z.number().nonnegative(),
+        unit: z.enum(weightUnits),
+      }),
+    )
+    .min(1),
+})
+
+export const finalizeWorkoutSchema = z
+  .object({
+    sets: updateWorkoutSetsSchema.shape.sets.optional(),
+  })
+  .optional()
+  .default({})
+
 export const workoutParamsSchema = z.object({ workoutId: z.string().uuid() })

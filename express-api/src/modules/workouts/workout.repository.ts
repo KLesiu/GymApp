@@ -1,6 +1,6 @@
-import type { PrismaClient } from "@prisma/client"
+import type { Prisma, PrismaClient } from "@prisma/client"
 
-import { ForbiddenError, NotFoundError } from "../../core/errors/app-error"
+import { ForbiddenError, NotFoundError, ValidationAppError } from "../../core/errors/app-error"
 import { getCurrentRank, getNextRank } from "../../shared/rank-service"
 import { calculateEloGain, calculateFormulaScore } from "./elo"
 
@@ -40,15 +40,20 @@ export class WorkoutRepository {
           })),
         },
       },
-      include: { sets: true },
+      include: {
+        gym: true,
+        planDay: true,
+        sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
+      },
     })
   }
 
-  async findWorkout(workoutId: string) {
-    return this.prisma.workoutSession.findUnique({
-      where: { id: workoutId },
+  async findWorkout(userId: string, workoutId: string) {
+    return this.prisma.workoutSession.findFirst({
+      where: { id: workoutId, userId },
       include: {
         gym: true,
+        planDay: true,
         sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
       },
     })
@@ -74,6 +79,49 @@ export class WorkoutRepository {
         planDay: true,
         sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
       },
+    })
+  }
+
+  async updateSets(
+    userId: string,
+    workoutId: string,
+    input: {
+      readonly sets: readonly {
+        readonly id?: string
+        readonly exerciseId: string
+        readonly series: number
+        readonly reps: number
+        readonly weight: number
+        readonly unit: "KILOGRAMS" | "POUNDS"
+      }[]
+    },
+  ) {
+    return this.prisma.$transaction(async (transaction) => {
+      await this.lockWorkout(transaction, workoutId)
+
+      const workout = await transaction.workoutSession.findFirst({
+        where: { id: workoutId, userId },
+        include: { sets: true },
+      })
+
+      if (!workout) {
+        throw new NotFoundError("WORKOUT_NOT_FOUND")
+      }
+
+      if (workout.status === "FINALIZED") {
+        throw new ValidationAppError("WORKOUT_ALREADY_FINALIZED")
+      }
+
+      await this.replaceSets(transaction, userId, workoutId, workout.sets, input.sets)
+
+      return transaction.workoutSession.findUnique({
+        where: { id: workoutId },
+        include: {
+          gym: true,
+          planDay: true,
+          sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
+        },
+      })
     })
   }
 
@@ -106,7 +154,21 @@ export class WorkoutRepository {
     })
   }
 
-  async finalizeWorkout(userId: string, workoutId: string, idempotencyKey: string) {
+  async finalizeWorkout(
+    userId: string,
+    workoutId: string,
+    idempotencyKey: string,
+    input?: {
+      readonly sets?: readonly {
+        readonly id?: string
+        readonly exerciseId: string
+        readonly series: number
+        readonly reps: number
+        readonly weight: number
+        readonly unit: "KILOGRAMS" | "POUNDS"
+      }[]
+    },
+  ) {
     return this.prisma.$transaction(async (transaction) => {
       const existingIdempotency = await transaction.idempotencyKey.findUnique({
         where: { userId_scope_key: { userId, scope: "workout.finalize", key: idempotencyKey } },
@@ -115,6 +177,8 @@ export class WorkoutRepository {
       if (existingIdempotency) {
         return { kind: "idempotent" as const, payload: existingIdempotency }
       }
+
+      await this.lockWorkout(transaction, workoutId)
 
       const workout = await transaction.workoutSession.findUnique({
         where: { id: workoutId },
@@ -133,13 +197,27 @@ export class WorkoutRepository {
         throw new ForbiddenError("WORKOUT_ACCESS_DENIED")
       }
 
-      if (workout.status === "FINALIZED" && workout.finalizedIdempotencyKeyId) {
-        const previous = await transaction.idempotencyKey.findUnique({
-          where: { id: workout.finalizedIdempotencyKeyId },
-        })
-        if (previous) {
-          return { kind: "idempotent" as const, payload: previous }
-        }
+      if (workout.status === "FINALIZED") {
+        throw new ValidationAppError("WORKOUT_ALREADY_FINALIZED")
+      }
+
+      if (input?.sets) {
+        await this.replaceSets(transaction, userId, workoutId, workout.sets, input.sets)
+      }
+
+      const finalizedWorkout = input?.sets
+        ? await transaction.workoutSession.findUnique({
+            where: { id: workoutId },
+            include: {
+              gym: true,
+              sets: { include: { exercise: true }, orderBy: [{ createdAt: "asc" }] },
+              user: true,
+            },
+          })
+        : workout
+
+      if (!finalizedWorkout) {
+        throw new NotFoundError("WORKOUT_NOT_FOUND")
       }
 
       const completedAt = new Date()
@@ -153,10 +231,10 @@ export class WorkoutRepository {
         }[]
       }[]
       let totalGain = 0
-      let currentElo = workout.user.elo
-      const grouped = new Map<string, typeof workout.sets>()
+      let currentElo = finalizedWorkout.user.elo
+      const grouped = new Map<string, typeof finalizedWorkout.sets>()
 
-      for (const set of workout.sets) {
+      for (const set of finalizedWorkout.sets) {
         const collection = grouped.get(set.exerciseId)
         if (collection) {
           collection.push(set)
@@ -176,7 +254,7 @@ export class WorkoutRepository {
             exerciseId,
             workoutSession: {
               userId,
-              gymId: workout.gymId,
+              gymId: finalizedWorkout.gymId,
               status: "FINALIZED",
               completedAt: { lt: completedAt },
             },
@@ -254,7 +332,7 @@ export class WorkoutRepository {
           responseJson: {
             comparison,
             gainElo: totalGain,
-            userOldElo: workout.user.elo,
+            userOldElo: finalizedWorkout.user.elo,
             profileRank: rank,
             nextRank,
             msg: "CREATED",
@@ -275,5 +353,63 @@ export class WorkoutRepository {
 
       return { kind: "created" as const, payload: createdKey }
     })
+  }
+
+  private async replaceSets(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    workoutId: string,
+    currentSets: readonly { readonly id: string; readonly exerciseId: string }[],
+    sets: readonly {
+      readonly id?: string
+      readonly exerciseId: string
+      readonly series: number
+      readonly reps: number
+      readonly weight: number
+      readonly unit: "KILOGRAMS" | "POUNDS"
+    }[],
+  ) {
+    const ownedSetIds = new Set(currentSets.map((set) => set.id))
+    const inputSetIds = sets.flatMap((set) => (set.id ? [set.id] : []))
+    if (inputSetIds.some((id) => !ownedSetIds.has(id))) {
+      throw new ValidationAppError("WORKOUT_SET_NOT_FOUND")
+    }
+
+    const exerciseIds = Array.from(new Set(sets.map((set) => set.exerciseId)))
+    const draftExerciseIds = new Set(currentSets.map((set) => set.exerciseId))
+    const allowedExercises = await transaction.exercise.findMany({
+      where: {
+        id: { in: exerciseIds },
+        OR: [{ ownerId: userId }, { id: { in: Array.from(draftExerciseIds) } }],
+      },
+      select: { id: true },
+    })
+    if (allowedExercises.length !== exerciseIds.length) {
+      throw new ValidationAppError("EXERCISE_NOT_FOUND")
+    }
+
+    await transaction.workoutSet.deleteMany({
+      where: { workoutSessionId: workoutId, id: { notIn: inputSetIds } },
+    })
+
+    await Promise.all(
+      sets.map((set) => {
+        const data = {
+          exerciseId: set.exerciseId,
+          series: set.series,
+          reps: set.reps,
+          weight: set.weight,
+          unit: set.unit,
+        }
+
+        return set.id
+          ? transaction.workoutSet.update({ where: { id: set.id }, data })
+          : transaction.workoutSet.create({ data: { ...data, workoutSessionId: workoutId } })
+      }),
+    )
+  }
+
+  private async lockWorkout(transaction: Prisma.TransactionClient, workoutId: string) {
+    await transaction.$queryRaw`SELECT id FROM "WorkoutSession" WHERE id = ${workoutId}::uuid FOR UPDATE`
   }
 }

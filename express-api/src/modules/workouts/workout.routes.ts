@@ -5,7 +5,12 @@ import { Router } from "express"
 import { requireAuth } from "../../core/auth/middleware"
 import { UnauthorizedError, ValidationAppError } from "../../core/errors/app-error"
 import { validate } from "../../core/http/validate"
-import { createWorkoutSchema, workoutParamsSchema } from "./workout.schemas"
+import {
+  createWorkoutSchema,
+  finalizeWorkoutSchema,
+  updateWorkoutSetsSchema,
+  workoutParamsSchema,
+} from "./workout.schemas"
 import { WorkoutService } from "./workout.service"
 
 const getActorId = (request: Request) => {
@@ -32,7 +37,7 @@ export const buildWorkoutRouter = (prisma: PrismaClient) => {
   router.post(
     "/workouts/:workoutId/finalize",
     requireAuth,
-    validate({ params: workoutParamsSchema }),
+    validate({ params: workoutParamsSchema, body: finalizeWorkoutSchema }),
     async (request, response) => {
       const params = workoutParamsSchema.parse(request.params)
       const idempotencyKey = request.header("Idempotency-Key")
@@ -40,7 +45,19 @@ export const buildWorkoutRouter = (prisma: PrismaClient) => {
         throw new ValidationAppError("IDEMPOTENCY_KEY_REQUIRED")
       }
 
-      response.json(await service.finalize(getActorId(request), params.workoutId, idempotencyKey))
+      response.json(
+        await service.finalize(getActorId(request), params.workoutId, idempotencyKey, request.body),
+      )
+    },
+  )
+
+  router.patch(
+    "/workouts/:workoutId/sets",
+    requireAuth,
+    validate({ params: workoutParamsSchema, body: updateWorkoutSetsSchema }),
+    async (request, response) => {
+      const params = workoutParamsSchema.parse(request.params)
+      response.json(await service.updateSets(getActorId(request), params.workoutId, request.body))
     },
   )
 
