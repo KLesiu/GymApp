@@ -1,0 +1,2387 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LiftContext Express API",
+    "version": "0.1.0",
+    "description": "Express API contract consumed by LiftContext mobile."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "cpassword"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "example": "new-user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "password123"
+          },
+          "cpassword": {
+            "type": "string",
+            "minLength": 8,
+            "example": "password123"
+          },
+          "isVisibleInRanking": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "seed-trainee"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          }
+        }
+      },
+      "GymRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Seed Gym"
+          },
+          "address": {
+            "type": "string",
+            "example": "Seed Address"
+          }
+        }
+      },
+      "MuscleGroupRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "region"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Chest"
+          },
+          "region": {
+            "type": "string",
+            "enum": [
+              "CHEST",
+              "BACK",
+              "SHOULDERS",
+              "BICEPS",
+              "TRICEPS",
+              "QUADS",
+              "HAMSTRINGS",
+              "GLUTES",
+              "CORE",
+              "CALVES",
+              "CUSTOM"
+            ]
+          }
+        }
+      },
+      "ExerciseRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "muscleGroupId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bench press"
+          },
+          "muscleGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formula": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "STRENGTH",
+              "VOLUME",
+              "PULLUP_INVERSE"
+            ],
+            "default": "STANDARD"
+          }
+        }
+      },
+      "UpdateExerciseRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bench press"
+          },
+          "muscleGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formula": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "STRENGTH",
+              "VOLUME",
+              "PULLUP_INVERSE"
+            ]
+          }
+        }
+      },
+      "LastScoresRequest": {
+        "type": "object",
+        "required": [
+          "exerciseId",
+          "series"
+        ],
+        "properties": {
+          "exerciseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "exerciseName": {
+            "type": "string",
+            "example": "Bench press"
+          },
+          "series": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "example": 1
+          },
+          "gymId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "PlanExerciseRequest": {
+        "type": "object",
+        "required": [
+          "exerciseId",
+          "series",
+          "repsTarget",
+          "orderIndex"
+        ],
+        "properties": {
+          "exerciseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "series": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 3
+          },
+          "repsTarget": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 10
+          },
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          }
+        }
+      },
+      "PlanDayRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "orderIndex",
+          "exercises"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Push day"
+          },
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanExerciseRequest"
+            }
+          }
+        }
+      },
+      "PlanRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "days"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Starter plan"
+          },
+          "description": {
+            "type": "string",
+            "example": "Simple training plan"
+          },
+          "days": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/PlanDayRequest"
+            }
+          }
+        }
+      },
+      "UpdatePlanRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated plan"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated description"
+          },
+          "days": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/PlanDayRequest"
+            }
+          }
+        }
+      },
+      "SetActivePlanRequest": {
+        "type": "object",
+        "required": [
+          "planId"
+        ],
+        "properties": {
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AssignPlanRequest": {
+        "type": "object",
+        "required": [
+          "traineeId"
+        ],
+        "properties": {
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "WorkoutSetRequest": {
+        "type": "object",
+        "required": [
+          "exerciseId",
+          "series",
+          "reps",
+          "weight",
+          "unit"
+        ],
+        "properties": {
+          "exerciseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "series": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 1
+          },
+          "reps": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 10
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "example": 80
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "KILOGRAMS",
+              "POUNDS"
+            ]
+          }
+        }
+      },
+      "CreateWorkoutRequest": {
+        "type": "object",
+        "required": [
+          "gymId",
+          "startedAt",
+          "sets"
+        ],
+        "properties": {
+          "gymId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planDayId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-22T12:00:00.000Z"
+          },
+          "sets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/WorkoutSetRequest"
+            }
+          }
+        }
+      },
+      "MeasurementRequest": {
+        "type": "object",
+        "required": [
+          "bodyPart",
+          "unit",
+          "value",
+          "takenAt"
+        ],
+        "properties": {
+          "bodyPart": {
+            "type": "string",
+            "enum": [
+              "WEIGHT",
+              "BODY_FAT",
+              "CHEST",
+              "WAIST",
+              "HIPS",
+              "THIGH",
+              "ARM"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "KG",
+              "CM",
+              "PERCENT"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "example": 82.5
+          },
+          "takenAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-22T12:00:00.000Z"
+          }
+        }
+      },
+      "RelationshipRequest": {
+        "type": "object",
+        "required": [
+          "traineeId"
+        ],
+        "properties": {
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ReportFieldRequest": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "type",
+          "isRequired",
+          "order"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "mood"
+          },
+          "label": {
+            "type": "string",
+            "example": "Mood"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "SCALE"
+            ]
+          },
+          "isRequired": {
+            "type": "boolean",
+            "example": true
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "moduleConfig": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ReportTemplateRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "fields"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Weekly check-in"
+          },
+          "description": {
+            "type": "string",
+            "example": "Weekly trainee report"
+          },
+          "fields": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ReportFieldRequest"
+            }
+          }
+        }
+      },
+      "UpdateReportTemplateRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Weekly check-in"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated description"
+          },
+          "fields": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ReportFieldRequest"
+            }
+          }
+        }
+      },
+      "ReportAssignmentRequest": {
+        "type": "object",
+        "required": [
+          "traineeId",
+          "templateId"
+        ],
+        "properties": {
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "example": "Fill this after training"
+          }
+        }
+      },
+      "RecurringRuleRequest": {
+        "type": "object",
+        "required": [
+          "traineeId",
+          "templateId",
+          "intervalUnit",
+          "intervalValue",
+          "startsAt"
+        ],
+        "properties": {
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "intervalUnit": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "WEEK",
+              "MONTH"
+            ]
+          },
+          "intervalValue": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 1
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateRecurringRuleRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "intervalUnit": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "WEEK",
+              "MONTH"
+            ]
+          },
+          "intervalValue": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 1
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReportSubmitRequest": {
+        "type": "object",
+        "required": [
+          "answers"
+        ],
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": true,
+            "example": {
+              "mood": "good"
+            }
+          }
+        }
+      },
+      "ReportFeedbackRequest": {
+        "type": "object",
+        "properties": {
+          "trainerOverallComment": {
+            "type": "string",
+            "example": "Good progress"
+          },
+          "fieldComments": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "mood": "Keep tracking this"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/trainer/register": {
+      "post": {
+        "summary": "Register trainer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Get authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/gyms": {
+      "get": {
+        "summary": "List gyms",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create gym",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GymRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/{gymId}": {
+      "get": {
+        "summary": "Get gym",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gymId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update gym",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gymId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GymRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete gym",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gymId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/muscle-groups": {
+      "get": {
+        "summary": "List muscle groups",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create muscle group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuscleGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/exercises": {
+      "get": {
+        "summary": "List exercises",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create exercise",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExerciseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/exercises/last-scores": {
+      "post": {
+        "summary": "Get contextual last exercise scores",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LastScoresRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/exercises/{exerciseId}": {
+      "get": {
+        "summary": "Get exercise",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update exercise",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExerciseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete exercise",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/plans": {
+      "get": {
+        "summary": "List plans",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/plans/active": {
+      "get": {
+        "summary": "Get active plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Set active plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActivePlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/plans/{planId}": {
+      "get": {
+        "summary": "Get plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/plans/{planId}/copy": {
+      "post": {
+        "summary": "Copy plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/plans/{planId}/assignments": {
+      "post": {
+        "summary": "Assign trainer plan to trainee",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignPlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/plans/{planId}/days": {
+      "get": {
+        "summary": "List plan days",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create plan day",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanDayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/plan-days/{planDayId}": {
+      "get": {
+        "summary": "Get plan day",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planDayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete plan day",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "planDayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workouts": {
+      "get": {
+        "summary": "List finalized workouts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create workout draft",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkoutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/workouts/dates": {
+      "get": {
+        "summary": "List workout dates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workouts/{workoutId}": {
+      "get": {
+        "summary": "Get workout details",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workouts/{workoutId}/finalize": {
+      "post": {
+        "summary": "Finalize workout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/measurements": {
+      "get": {
+        "summary": "List body measurements",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bodyPart",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WEIGHT",
+                "BODY_FAT",
+                "CHEST",
+                "WAIST",
+                "HIPS",
+                "THIGH",
+                "ARM"
+              ]
+            }
+          },
+          {
+            "name": "unit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KG",
+                "CM",
+                "PERCENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create body measurement",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/measurements/bulk": {
+      "post": {
+        "summary": "Create body measurements in bulk",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/components/schemas/MeasurementRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/measurements/history": {
+      "get": {
+        "summary": "Get measurement history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bodyPart",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WEIGHT",
+                "BODY_FAT",
+                "CHEST",
+                "WAIST",
+                "HIPS",
+                "THIGH",
+                "ARM"
+              ]
+            }
+          },
+          {
+            "name": "unit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KG",
+                "CM",
+                "PERCENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/measurements/trends": {
+      "get": {
+        "summary": "Get measurement trends",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bodyPart",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WEIGHT",
+                "BODY_FAT",
+                "CHEST",
+                "WAIST",
+                "HIPS",
+                "THIGH",
+                "ARM"
+              ]
+            }
+          },
+          {
+            "name": "unit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KG",
+                "CM",
+                "PERCENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/measurements/{measurementId}": {
+      "get": {
+        "summary": "Get measurement detail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/relationships": {
+      "post": {
+        "summary": "Create trainer-trainee relationship",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationshipRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/trainee/relationships/{relationshipId}/accept": {
+      "post": {
+        "summary": "Accept trainer relationship",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "relationshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainee/relationships/{relationshipId}/reject": {
+      "post": {
+        "summary": "Reject trainer relationship",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "relationshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainee/trainer/detach": {
+      "post": {
+        "summary": "Detach current trainer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/trainees": {
+      "get": {
+        "summary": "List active trainees",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/trainees/{traineeId}/unlink": {
+      "post": {
+        "summary": "Unlink trainee",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "traineeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/report-templates": {
+      "get": {
+        "summary": "List report templates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create report template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/report-templates/{templateId}": {
+      "get": {
+        "summary": "Get report template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update report template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete report template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/report-assignments": {
+      "post": {
+        "summary": "Assign report",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportAssignmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/trainee/report-assignments": {
+      "get": {
+        "summary": "List trainee report assignments",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainee/report-assignments/{assignmentId}/submissions": {
+      "post": {
+        "summary": "Submit report answers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/report-submissions": {
+      "get": {
+        "summary": "List report submissions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "traineeId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/report-submissions/{submissionId}/feedback": {
+      "patch": {
+        "summary": "Add report feedback",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportFeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/recurring-report-rules": {
+      "get": {
+        "summary": "List recurring report rules",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "traineeId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create recurring report rule",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringRuleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/recurring-report-rules/{recurringRuleId}": {
+      "patch": {
+        "summary": "Update recurring report rule",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recurringRuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecurringRuleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete recurring report rule",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recurringRuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/recurring-report-rules/{recurringRuleId}/pause": {
+      "post": {
+        "summary": "Pause recurring report rule",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recurringRuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/trainer/recurring-report-rules/{recurringRuleId}/resume": {
+      "post": {
+        "summary": "Resume recurring report rule",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recurringRuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/ranking": {
+      "get": {
+        "summary": "Ranking",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{userId}/elo": {
+      "get": {
+        "summary": "Get user Elo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/elo/chart": {
+      "get": {
+        "summary": "Elo history chart",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}
