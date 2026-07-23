@@ -6,6 +6,7 @@ export const keys = {
   plans: ["plans"] as const,
   activePlan: ["plans", "active"] as const,
   workouts: ["workouts"] as const,
+  workout: (workoutId: string) => ["workouts", workoutId] as const,
   ranking: (page = 1) => ["ranking", page] as const,
   eloChart: ["elo", "chart"] as const,
   measurements: (bodyPart?: string) => ["measurements", bodyPart] as const,

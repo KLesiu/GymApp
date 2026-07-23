@@ -21,9 +21,35 @@ export type MuscleGroup = {
   region: string;
   isGlobal?: boolean;
 };
+export type ExerciseBodyPart =
+  | "CHEST"
+  | "BACK"
+  | "SHOULDERS"
+  | "BICEPS"
+  | "TRICEPS"
+  | "QUADS"
+  | "HAMSTRINGS"
+  | "GLUTES"
+  | "CORE"
+  | "CALVES";
+
+export const exerciseBodyParts = [
+  "CHEST",
+  "BACK",
+  "SHOULDERS",
+  "BICEPS",
+  "TRICEPS",
+  "QUADS",
+  "HAMSTRINGS",
+  "GLUTES",
+  "CORE",
+  "CALVES",
+] as const satisfies readonly ExerciseBodyPart[];
+
 export type Exercise = {
   _id: string;
   name: string;
+  bodyPart?: ExerciseBodyPart;
   formula: string;
   muscleGroup?: MuscleGroup;
   muscleGroupId?: string;
@@ -57,10 +83,30 @@ export type WorkoutSet = {
 export type Workout = {
   id: string;
   _id?: string;
-  gymId: string;
-  status: "DRAFT" | "FINALIZED";
-  startedAt: string;
+  gymId?: string;
+  gym?: string;
+  planDay?: { _id: string; name: string } | null;
+  status?: "DRAFT" | "FINALIZED";
+  createdAt?: string;
+  startedAt?: string;
   completedAt?: string;
+  exercises?: WorkoutExerciseSet[];
+};
+export type WorkoutExerciseSet = {
+  _id: string;
+  id?: string;
+  exerciseId: string;
+  exerciseName: string;
+  series: number;
+  reps: number;
+  weight: number;
+  unit: "KILOGRAMS" | "POUNDS";
+};
+export type WorkoutDetail = Workout & {
+  createdAt: string;
+  gym: string;
+  planDay?: { _id: string; name: string } | null;
+  exercises: WorkoutExerciseSet[];
 };
 export type LastScore = {
   weight: number;
@@ -126,6 +172,13 @@ export const useWorkouts = () =>
     queryFn: ({ signal }) =>
       request<Workout[]>({ url: "/api/v1/workouts" }, signal),
   });
+export const useWorkout = (workoutId: string | undefined) =>
+  useQuery({
+    queryKey: workoutId ? keys.workout(workoutId) : ["workouts", "missing"],
+    queryFn: ({ signal }) =>
+      request<WorkoutDetail>({ url: `/api/v1/workouts/${workoutId}` }, signal),
+    enabled: Boolean(workoutId),
+  });
 export const useRanking = () =>
   useQuery({
     queryKey: keys.ranking(1),
@@ -185,7 +238,8 @@ export const useUpsertExercise = () => {
   return useMutation({
     mutationFn: (body: {
       name: string;
-      muscleGroupId: string;
+      bodyPart: ExerciseBodyPart;
+      muscleGroupId?: string;
       formula: string;
     }) =>
       request<Exercise>({
@@ -193,7 +247,12 @@ export const useUpsertExercise = () => {
         method: "POST",
         data: body,
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.exercises }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.exercises }),
+        qc.invalidateQueries({ queryKey: keys.muscleGroups }),
+      ]);
+    },
   });
 };
 export const useCreatePlan = () => {
@@ -247,16 +306,48 @@ export const useCreateWorkout = () => {
     onSuccess: () => void qc.invalidateQueries({ queryKey: keys.workouts }),
   });
 };
+export const useUpdateWorkoutSets = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      workoutId,
+      sets,
+    }: {
+      workoutId: string;
+      sets: {
+        id?: string;
+        exerciseId: string;
+        series: number;
+        reps: number;
+        weight: number;
+        unit: "KILOGRAMS" | "POUNDS";
+      }[];
+    }) =>
+      request<WorkoutDetail>({
+        url: `/api/v1/workouts/${workoutId}/sets`,
+        method: "PATCH",
+        data: { sets },
+      }),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.workout(variables.workoutId) }),
+        qc.invalidateQueries({ queryKey: keys.workouts }),
+      ]);
+    },
+  });
+};
 export const useFinalizeWorkout = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       workoutId,
       operationId,
-    }: { workoutId: string; operationId: string }) =>
+      sets,
+    }: { workoutId: string; operationId: string; sets: WorkoutSet[] }) =>
       request<{ gainElo?: number; comparison?: unknown[] }>({
         url: `/api/v1/workouts/${workoutId}/finalize`,
         method: "POST",
+        data: { sets },
         headers: {
           "Idempotency-Key": createIdempotencyKey(
             "workout-finalize",
@@ -264,8 +355,9 @@ export const useFinalizeWorkout = () => {
           ),
         },
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.workout(variables.workoutId) }),
         qc.invalidateQueries({ queryKey: keys.workouts }),
         qc.invalidateQueries({ queryKey: keys.eloChart }),
         qc.invalidateQueries({ queryKey: keys.ranking(1) }),
