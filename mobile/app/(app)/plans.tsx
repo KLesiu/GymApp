@@ -3,10 +3,13 @@ import {
   Button,
   Card,
   EmptyState,
+  IconButton,
   Screen,
   Text,
 } from "@/components/primitives";
+import { theme } from "@/theme/tokens";
 import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function Plans() {
   const plans = usePlans();
@@ -15,18 +18,20 @@ export default function Plans() {
   const activePlanId = activePlan.data?._id;
 
   return (
-    <Screen title="Plans">
-      <Card>
-        <Text variant="subtitle">Your training plans</Text>
-        <Text tone="muted">
-          Choose which plan is active, or create a new one from the exercise
-          library.
-        </Text>
-        <Button
+    <Screen>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <Text variant="title">Plans</Text>
+          <Text tone="muted">
+            Choose which plan is active, or create a new one from the exercise library.
+          </Text>
+        </View>
+        <IconButton
+          name="add"
           label="Add new plan"
           onPress={() => router.push("/(app)/plans/create")}
         />
-      </Card>
+      </View>
 
       {plans.data?.length ? (
         plans.data.map((plan) => {
@@ -67,11 +72,19 @@ export default function Plans() {
       ) : (
         <EmptyState
           title="No plans yet"
-          body="Create a plan first. Plans define exercises and series, so workout setup can render the right input slots."
-          actionLabel="Add new plan"
-          onAction={() => router.push("/(app)/plans/create")}
+          body="Create a plan first with the plus button. Plans define exercises and series, so workout setup can render the right input slots."
         />
       )}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space.md,
+  },
+  headerText: { flex: 1, gap: theme.space.xs },
+});
