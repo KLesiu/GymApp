@@ -78,6 +78,15 @@ enum BodyPart {
   WEIGHT
   BODY_FAT
   CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CORE
+  CALVES
   WAIST
   HIPS
   THIGH
@@ -157,6 +166,7 @@ model Exercise {
   ownerId       String              @db.Uuid
   muscleGroupId String              @db.Uuid
   name          String
+  bodyPart      BodyPart
   formula       ExerciseEloFormula  @default(STANDARD)
   createdAt     DateTime            @default(now())
   owner         User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
