@@ -11,6 +11,6 @@
 - Elo, history, ranking, and dashboard queries refresh after finalization.
 - Measurement creation and trend text fallback work.
 - Coach/report screens refresh on focus and can be extended without realtime dependencies.
-- PL/EN strings and date/number formatting verified.
+- English-only strings and date/number formatting verified.
 - Loading, empty, error, and retry states present on core screens.
 - Android export and Expo Doctor pass.
