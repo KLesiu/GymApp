@@ -46,12 +46,18 @@ const exerciseBodyPartEnum = [
   "CALVES",
 ] as const
 
-const bodyPartEnum = ["WEIGHT", "BODY_FAT", ...exerciseBodyPartEnum, "WAIST", "HIPS", "THIGH", "ARM"] as const
+const bodyPartEnum = [
+  "WEIGHT",
+  "BODY_FAT",
+  ...exerciseBodyPartEnum,
+  "WAIST",
+  "HIPS",
+  "THIGH",
+  "ARM",
+] as const
 
 const ok = { description: "OK" } as const
 const created = { description: "Created" } as const
-const noContent = { description: "No content" } as const
-
 const auth = [{ bearerAuth: [] }]
 
 export const openApiSpec = {
@@ -179,11 +185,11 @@ export const openApiSpec = {
       },
       PlanRequest: {
         type: "object",
-        required: ["name", "days"],
+        required: ["name"],
         properties: {
           name: { type: "string", example: "Starter plan" },
           description: { type: "string", example: "Simple training plan" },
-          days: { type: "array", minItems: 1, items: schemaRef("PlanDayRequest") },
+          days: { type: "array", items: schemaRef("PlanDayRequest") },
         },
       },
       UpdatePlanRequest: {
@@ -192,7 +198,6 @@ export const openApiSpec = {
         properties: {
           name: { type: "string", example: "Updated plan" },
           description: { type: "string", example: "Updated description" },
-          days: { type: "array", minItems: 1, items: schemaRef("PlanDayRequest") },
         },
       },
       SetActivePlanRequest: {
@@ -211,8 +216,8 @@ export const openApiSpec = {
         properties: {
           exerciseId: uuidSchema,
           series: { type: "integer", minimum: 1, example: 1 },
-          reps: { type: "integer", minimum: 1, example: 10 },
-          weight: { type: "number", minimum: 0, example: 80 },
+          reps: { type: "integer", minimum: 1, nullable: true, example: 10 },
+          weight: { type: "number", minimum: 0, nullable: true, example: 80 },
           unit: { type: "string", enum: ["KILOGRAMS", "POUNDS"] },
         },
       },
@@ -498,6 +503,14 @@ export const openApiSpec = {
         responses: { "200": ok },
       },
     },
+    "/api/v1/plans/active/{planId}": {
+      delete: {
+        summary: "Deactivate active plan",
+        security: auth,
+        parameters: [pathParam("planId")],
+        responses: { "200": ok },
+      },
+    },
     "/api/v1/plans/{planId}": {
       get: {
         summary: "Get plan",
@@ -556,6 +569,13 @@ export const openApiSpec = {
         summary: "Get plan day",
         security: auth,
         parameters: [pathParam("planDayId")],
+        responses: { "200": ok },
+      },
+      patch: {
+        summary: "Update plan day",
+        security: auth,
+        parameters: [pathParam("planDayId")],
+        requestBody: jsonBody(schemaRef("PlanDayRequest")),
         responses: { "200": ok },
       },
       delete: {
@@ -628,7 +648,11 @@ export const openApiSpec = {
       post: {
         summary: "Create body measurements in bulk",
         security: auth,
-        requestBody: jsonBody({ type: "array", minItems: 1, items: schemaRef("MeasurementRequest") }),
+        requestBody: jsonBody({
+          type: "array",
+          minItems: 1,
+          items: schemaRef("MeasurementRequest"),
+        }),
         responses: { "201": created },
       },
     },
@@ -696,6 +720,9 @@ export const openApiSpec = {
     },
     "/api/v1/trainee/trainer/detach": {
       post: { summary: "Detach current trainer", security: auth, responses: { "200": ok } },
+    },
+    "/api/v1/trainee/trainer": {
+      get: { summary: "Get current trainer", security: auth, responses: { "200": ok } },
     },
     "/api/v1/trainer/trainees": {
       get: { summary: "List active trainees", security: auth, responses: { "200": ok } },

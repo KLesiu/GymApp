@@ -5,9 +5,14 @@ import { weightUnits } from "../../shared/constants"
 export const workoutSetSchema = z.object({
   exerciseId: z.string().uuid(),
   series: z.number().int().positive(),
+  reps: z.number().int().positive().nullable().optional(),
+  weight: z.number().nonnegative().nullable().optional(),
+  unit: z.enum(weightUnits),
+})
+
+const completedWorkoutSetSchema = workoutSetSchema.extend({
   reps: z.number().int().positive(),
   weight: z.number().nonnegative(),
-  unit: z.enum(weightUnits),
 })
 
 export const createWorkoutSchema = z.object({
@@ -25,8 +30,8 @@ export const updateWorkoutSetsSchema = z.object({
         id: z.string().uuid().optional(),
         exerciseId: z.string().uuid(),
         series: z.number().int().positive(),
-        reps: z.number().int().positive(),
-        weight: z.number().nonnegative(),
+        reps: completedWorkoutSetSchema.shape.reps,
+        weight: completedWorkoutSetSchema.shape.weight,
         unit: z.enum(weightUnits),
       }),
     )

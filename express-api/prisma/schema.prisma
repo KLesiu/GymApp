@@ -260,8 +260,8 @@ model WorkoutSet {
   workoutSessionId String       @db.Uuid
   exerciseId       String       @db.Uuid
   series           Int
-  reps             Int
-  weight           Decimal      @db.Decimal(10, 2)
+  reps             Int?
+  weight           Decimal?     @db.Decimal(10, 2)
   unit             WeightUnit
   createdAt        DateTime     @default(now())
   workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)

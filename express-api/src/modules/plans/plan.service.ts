@@ -1,5 +1,5 @@
 import type { AccessService } from "../../core/access/access-service"
-import { ForbiddenError, NotFoundError } from "../../core/errors/app-error"
+import { ForbiddenError, NotFoundError, ValidationAppError } from "../../core/errors/app-error"
 import type { PlanRepository } from "./plan.repository"
 
 type PlanShape = {
@@ -52,6 +52,7 @@ export class PlanService {
   ) {}
 
   async create(userId: string, input: Parameters<PlanRepository["create"]>[1]) {
+    await this.assertOwnedExercises(userId, input.days ?? [])
     return mapPlan(await this.repository.create(userId, input))
   }
 
@@ -125,12 +126,21 @@ export class PlanService {
     return { msg: "PLAN_ACTIVATED", plan: mapPlan(plan) }
   }
 
+  async deactivateSelfPlan(userId: string, planId: string) {
+    const result = await this.repository.deactivateSelfPlan(userId, planId)
+    if (result.count === 0) {
+      throw new NotFoundError("PLAN_NOT_FOUND")
+    }
+    return { msg: "PLAN_DEACTIVATED" }
+  }
+
   async createPlanDay(
     userId: string,
     planId: string,
     input: Parameters<PlanRepository["createPlanDay"]>[1],
   ) {
     await this.get(userId, planId)
+    await this.assertOwnedExercises(userId, [input])
     const day = await this.repository.createPlanDay(planId, input)
     return mapPlanDay(day)
   }
@@ -154,6 +164,32 @@ export class PlanService {
       throw new NotFoundError("PLAN_DAY_NOT_FOUND")
     }
     return { msg: "DELETED" }
+  }
+
+  async updatePlanDay(
+    userId: string,
+    planDayId: string,
+    input: Parameters<PlanRepository["updatePlanDay"]>[2],
+  ) {
+    await this.assertOwnedExercises(userId, [input])
+    const day = await this.repository.updatePlanDay(userId, planDayId, input)
+    if (!day) {
+      throw new NotFoundError("PLAN_DAY_NOT_FOUND")
+    }
+    return mapPlanDay(day)
+  }
+
+  private async assertOwnedExercises(
+    userId: string,
+    days: readonly { readonly exercises: readonly { readonly exerciseId: string }[] }[],
+  ) {
+    const exerciseIds = Array.from(
+      new Set(days.flatMap((day) => day.exercises.map((exercise) => exercise.exerciseId))),
+    )
+    const ownedCount = await this.repository.countOwnedExercises(userId, exerciseIds)
+    if (ownedCount !== exerciseIds.length) {
+      throw new ValidationAppError("EXERCISE_NOT_FOUND")
+    }
   }
 }
 

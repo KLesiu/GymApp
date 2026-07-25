@@ -17,8 +17,8 @@ export class WorkoutRepository {
       readonly sets: readonly {
         readonly exerciseId: string
         readonly series: number
-        readonly reps: number
-        readonly weight: number
+        readonly reps?: number | null
+        readonly weight?: number | null
         readonly unit: "KILOGRAMS" | "POUNDS"
       }[]
     },
@@ -34,8 +34,8 @@ export class WorkoutRepository {
           create: input.sets.map((set) => ({
             exerciseId: set.exerciseId,
             series: set.series,
-            reps: set.reps,
-            weight: set.weight,
+            reps: set.reps ?? null,
+            weight: set.weight ?? null,
             unit: set.unit,
           })),
         },
@@ -119,7 +119,10 @@ export class WorkoutRepository {
         include: {
           gym: true,
           planDay: true,
-          sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
+          sets: {
+            include: { exercise: true },
+            orderBy: [{ exerciseId: "asc" }, { series: "asc" }],
+          },
         },
       })
     })
@@ -232,9 +235,15 @@ export class WorkoutRepository {
       }[]
       let totalGain = 0
       let currentElo = finalizedWorkout.user.elo
-      const grouped = new Map<string, typeof finalizedWorkout.sets>()
+      const completedSets = finalizedWorkout.sets.map((set) => {
+        if (set.reps === null || set.weight === null) {
+          throw new ValidationAppError("WORKOUT_SET_INCOMPLETE")
+        }
+        return { ...set, reps: set.reps, weight: set.weight }
+      })
+      const grouped = new Map<string, typeof completedSets>()
 
-      for (const set of finalizedWorkout.sets) {
+      for (const set of completedSets) {
         const collection = grouped.get(set.exerciseId)
         if (collection) {
           collection.push(set)
@@ -252,6 +261,8 @@ export class WorkoutRepository {
         const previous = await transaction.workoutSet.findFirst({
           where: {
             exerciseId,
+            reps: { not: null },
+            weight: { not: null },
             workoutSession: {
               userId,
               gymId: finalizedWorkout.gymId,
@@ -274,10 +285,16 @@ export class WorkoutRepository {
         }, firstSet)
 
         let gain = 0
+        let completePrevious: { reps: number; weight: Prisma.Decimal; unit: string } | null = null
+
         if (previous) {
+          if (previous.reps === null || previous.weight === null) {
+            throw new ValidationAppError("WORKOUT_SET_INCOMPLETE")
+          }
+          completePrevious = { reps: previous.reps, weight: previous.weight, unit: previous.unit }
           gain = calculateEloGain(bestCurrent.exercise.formula, {
-            previousWeight: Number(previous.weight),
-            previousReps: previous.reps,
+            previousWeight: Number(completePrevious.weight),
+            previousReps: completePrevious.reps,
             currentWeight: Number(bestCurrent.weight),
             currentReps: bestCurrent.reps,
           })
@@ -298,8 +315,8 @@ export class WorkoutRepository {
               ),
               previousScore: calculateFormulaScore(
                 bestCurrent.exercise.formula,
-                Number(previous.weight),
-                previous.reps,
+                Number(completePrevious.weight),
+                completePrevious.reps,
               ),
             },
           })
@@ -313,8 +330,12 @@ export class WorkoutRepository {
           seriesComparisons: sets.map((set) => ({
             series: set.series,
             currentResult: { reps: set.reps, weight: Number(set.weight), unit: set.unit },
-            previousResult: previous
-              ? { reps: previous.reps, weight: Number(previous.weight), unit: previous.unit }
+            previousResult: completePrevious
+              ? {
+                  reps: completePrevious.reps,
+                  weight: Number(completePrevious.weight),
+                  unit: completePrevious.unit,
+                }
               : null,
           })),
         })
@@ -397,8 +418,8 @@ export class WorkoutRepository {
         const data = {
           exerciseId: set.exerciseId,
           series: set.series,
-          reps: set.reps,
-          weight: set.weight,
+          reps: set.reps ?? null,
+          weight: set.weight ?? null,
           unit: set.unit,
         }
 

@@ -63,7 +63,7 @@ export class WorkoutService {
         exerciseName: set.exercise.name,
         series: set.series,
         reps: set.reps,
-        weight: Number(set.weight),
+        weight: set.weight === null ? null : Number(set.weight),
         unit: set.unit,
       })),
     }))
@@ -95,7 +95,7 @@ export class WorkoutService {
         exerciseName: set.exercise.name,
         series: set.series,
         reps: set.reps,
-        weight: Number(set.weight),
+        weight: set.weight === null ? null : Number(set.weight),
         unit: set.unit,
       })),
     }

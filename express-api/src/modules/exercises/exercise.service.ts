@@ -23,7 +23,13 @@ export class ExerciseService {
     bodyPart: BodyPart,
     formula: ExerciseEloFormula,
   ) {
-    const exercise = await this.repository.createExercise(userId, muscleGroupId, name, bodyPart, formula)
+    const exercise = await this.repository.createExercise(
+      userId,
+      muscleGroupId,
+      name,
+      bodyPart,
+      formula,
+    )
     return {
       _id: exercise.id,
       name: exercise.name,

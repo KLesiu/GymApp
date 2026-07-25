@@ -16,8 +16,8 @@ export class TestEnvironment {
   private databaseUrl = ""
   private prisma: PrismaClient | null = null
   private app: StartedModules["app"] | null = null
-  private containerName = `lgym-api-test-${process.pid}`
-  private postgresPort = 55432 + Number(process.env.VITEST_POOL_ID ?? "0")
+  private containerName = `lgym-api-test-${process.pid}-${process.env.VITEST_POOL_ID ?? "0"}`
+  private postgresPort = 0
 
   async start() {
     await this.startPostgresContainer()
@@ -44,7 +44,7 @@ export class TestEnvironment {
       this.prisma = null
     }
 
-    await execFileAsync("docker", ["stop", this.containerName])
+    await execFileAsync("docker", ["stop", this.containerName]).catch(() => undefined)
   }
 
   get client() {
@@ -115,16 +115,28 @@ export class TestEnvironment {
       "-e",
       "POSTGRES_PASSWORD=postgres",
       "-p",
-      `${this.postgresPort}:5432`,
+      "127.0.0.1::5432",
       POSTGRES_IMAGE,
     ])
+
+    const { stdout } = await execFileAsync("docker", ["port", this.containerName, "5432/tcp"])
+    const port = stdout.trim().match(/:(\d+)$/)?.[1]
+    if (!port) {
+      throw new Error("POSTGRES_PORT_NOT_FOUND")
+    }
+    this.postgresPort = Number(port)
   }
 
   private async runMigrations() {
     const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx"
+    const migrationCommand =
+      process.platform === "win32"
+        ? { command: "cmd.exe", args: ["/d", "/s", "/c", `${npxCommand} prisma migrate deploy`] }
+        : { command: npxCommand, args: ["prisma", "migrate", "deploy"] }
+
     for (const attempt of [1, 2, 3, 4, 5, 6] as const) {
       try {
-        await execFileAsync(npxCommand, ["prisma", "migrate", "deploy"], {
+        await execFileAsync(migrationCommand.command, migrationCommand.args, {
           cwd: process.cwd(),
           env: { ...process.env, DATABASE_URL: this.databaseUrl },
         })

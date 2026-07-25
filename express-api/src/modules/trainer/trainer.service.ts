@@ -50,6 +50,24 @@ export class TrainerService {
     }))
   }
 
+  async getCurrentTrainer(traineeId: string) {
+    const relationship = await this.repository.findActiveTrainerForTrainee(traineeId)
+    if (!relationship) {
+      return null
+    }
+
+    return {
+      _id: relationship.id,
+      status: relationship.status,
+      activatedAt: relationship.activatedAt,
+      trainer: {
+        _id: relationship.trainer.id,
+        name: relationship.trainer.name,
+        email: relationship.trainer.email,
+      },
+    }
+  }
+
   async detachTrainee(traineeId: string) {
     const result = await this.repository.detachByTrainee(traineeId)
     if (result.count === 0) {

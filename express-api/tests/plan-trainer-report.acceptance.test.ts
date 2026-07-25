@@ -376,6 +376,7 @@ const createExercise = async (
   })
   return authRequest(environment.client.post("/api/v1/exercises"), token).send({
     name,
+    bodyPart: region,
     muscleGroupId: muscleGroup.body._id,
     formula,
   })

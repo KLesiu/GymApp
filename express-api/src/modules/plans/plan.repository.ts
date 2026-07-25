@@ -8,7 +8,7 @@ export class PlanRepository {
     input: {
       readonly name: string
       readonly description?: string
-      readonly days: readonly {
+      readonly days?: readonly {
         readonly name: string
         readonly orderIndex: number
         readonly exercises: readonly {
@@ -26,7 +26,7 @@ export class PlanRepository {
         name: input.name,
         description: input.description ?? null,
         days: {
-          create: input.days.map((day) => ({
+          create: (input.days ?? []).map((day) => ({
             name: day.name,
             orderIndex: day.orderIndex,
             exercises: {
@@ -75,12 +75,23 @@ export class PlanRepository {
     return this.prisma.plan.updateMany({ where: { id: planId, ownerId }, data: input })
   }
 
+  async countOwnedExercises(ownerId: string, exerciseIds: readonly string[]) {
+    if (exerciseIds.length === 0) {
+      return 0
+    }
+
+    return this.prisma.exercise.count({ where: { id: { in: [...exerciseIds] }, ownerId } })
+  }
+
   async deletePlan(ownerId: string, planId: string) {
     return this.prisma.plan.deleteMany({ where: { id: planId, ownerId } })
   }
 
   async copyPlan(ownerId: string, planId: string) {
-    const plan = await this.findById(planId)
+    const plan = await this.prisma.plan.findFirst({
+      where: { id: planId, ownerId },
+      include: { days: { include: { exercises: true }, orderBy: { orderIndex: "asc" } } },
+    })
     if (!plan) {
       return null
     }
@@ -146,6 +157,40 @@ export class PlanRepository {
     return this.prisma.planDay.deleteMany({ where: { id: planDayId, plan: { ownerId } } })
   }
 
+  async updatePlanDay(
+    ownerId: string,
+    planDayId: string,
+    input: {
+      readonly name: string
+      readonly orderIndex: number
+      readonly exercises: readonly {
+        readonly exerciseId: string
+        readonly series: number
+        readonly repsTarget: number
+        readonly orderIndex: number
+      }[]
+    },
+  ) {
+    const day = await this.findPlanDay(ownerId, planDayId)
+    if (!day) {
+      return null
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.planExercise.deleteMany({ where: { planDayId } }),
+      this.prisma.planDay.update({
+        where: { id: planDayId },
+        data: {
+          name: input.name,
+          orderIndex: input.orderIndex,
+          exercises: { create: input.exercises.map((exercise) => ({ ...exercise })) },
+        },
+      }),
+    ])
+
+    return this.findPlanDay(ownerId, planDayId)
+  }
+
   async assignPlan(planId: string, trainerId: string, traineeId: string) {
     await this.prisma.planAssignment.updateMany({
       where: { traineeId, isActive: true },
@@ -165,6 +210,13 @@ export class PlanRepository {
           include: { days: { include: { exercises: true }, orderBy: { orderIndex: "asc" } } },
         },
       },
+    })
+  }
+
+  async deactivateSelfPlan(traineeId: string, planId: string) {
+    return this.prisma.planAssignment.updateMany({
+      where: { traineeId, planId, isActive: true },
+      data: { isActive: false },
     })
   }
 }

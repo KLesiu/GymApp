@@ -16,11 +16,14 @@ export const planDaySchema = z.object({
 export const createPlanSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  days: z.array(planDaySchema).min(1),
+  days: z.array(planDaySchema).default([]),
 })
 
-export const updatePlanSchema = createPlanSchema
-  .partial()
+export const updatePlanSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().optional(),
+  })
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one field is required",
   })
@@ -28,6 +31,8 @@ export const updatePlanSchema = createPlanSchema
 export const planParamsSchema = z.object({ planId: z.string().uuid() })
 
 export const planDayParamsSchema = z.object({ planDayId: z.string().uuid() })
+
+export const updatePlanDaySchema = planDaySchema
 
 export const assignPlanSchema = z.object({ traineeId: z.string().uuid() })
 

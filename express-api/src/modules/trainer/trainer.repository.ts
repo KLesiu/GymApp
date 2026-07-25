@@ -37,6 +37,14 @@ export class TrainerRepository {
     })
   }
 
+  async findActiveTrainerForTrainee(traineeId: string) {
+    return this.prisma.trainerRelationship.findFirst({
+      where: { traineeId, status: "ACTIVE" },
+      include: { trainer: true },
+      orderBy: { activatedAt: "desc" },
+    })
+  }
+
   async detachByTrainee(traineeId: string) {
     return this.prisma.trainerRelationship.updateMany({
       where: { traineeId, status: "ACTIVE" },

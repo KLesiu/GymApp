@@ -14,6 +14,7 @@ import {
   planDaySchema,
   planParamsSchema,
   setActivePlanSchema,
+  updatePlanDaySchema,
   updatePlanSchema,
 } from "./plan.schemas"
 import { PlanService } from "./plan.service"
@@ -53,6 +54,16 @@ export const buildPlanRouter = (prisma: PrismaClient) => {
     validate({ body: setActivePlanSchema }),
     async (request, response) => {
       response.json(await service.setSelfActivePlan(getActorId(request), request.body.planId))
+    },
+  )
+
+  router.delete(
+    "/plans/active/:planId",
+    requireAuth,
+    validate({ params: planParamsSchema }),
+    async (request, response) => {
+      const params = planParamsSchema.parse(request.params)
+      response.json(await service.deactivateSelfPlan(getActorId(request), params.planId))
     },
   )
 
@@ -135,6 +146,18 @@ export const buildPlanRouter = (prisma: PrismaClient) => {
     async (request, response) => {
       const params = planDayParamsSchema.parse(request.params)
       response.json(await service.deletePlanDay(getActorId(request), params.planDayId))
+    },
+  )
+
+  router.patch(
+    "/plan-days/:planDayId",
+    requireAuth,
+    validate({ params: planDayParamsSchema, body: updatePlanDaySchema }),
+    async (request, response) => {
+      const params = planDayParamsSchema.parse(request.params)
+      response.json(
+        await service.updatePlanDay(getActorId(request), params.planDayId, request.body),
+      )
     },
   )
 

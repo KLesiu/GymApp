@@ -92,7 +92,13 @@ describeAcceptance("workout ranking acceptance", (environment, register) => {
 
   it("finalizes the submitted set form instead of stale draft sets", async () => {
     const user = await register("form-source-user", "form-source-user@example.com")
-    const exercise = await createExercise(environment, user.token, "Form Bench", "CHEST", "STANDARD")
+    const exercise = await createExercise(
+      environment,
+      user.token,
+      "Form Bench",
+      "CHEST",
+      "STANDARD",
+    )
     const gym = await authRequest(environment.client.post("/api/v1/gyms"), user.token).send({
       name: "Form Gym",
       address: "Address",

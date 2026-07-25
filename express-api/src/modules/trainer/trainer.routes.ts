@@ -75,6 +75,10 @@ export const buildTrainerRouter = (prisma: PrismaClient) => {
     },
   )
 
+  router.get("/trainee/trainer", requireAuth, requireRole("TRAINEE"), async (request, response) => {
+    response.json(await service.getCurrentTrainer(getActorId(request)))
+  })
+
   router.post(
     "/trainer/trainees/:traineeId/unlink",
     requireAuth,
