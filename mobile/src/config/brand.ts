@@ -1,8 +1,7 @@
 export const brand = {
   name: "LiftContext",
   appName: "LiftContext",
-  tagline: "Porównuj wyniki we właściwym kontekście.",
-  taglineEn: "Compare results in the right context.",
+  tagline: "Compare results in the right context.",
   slug: "liftcontext-mobile",
   scheme: "liftcontext",
   urlScheme: "liftcontext",

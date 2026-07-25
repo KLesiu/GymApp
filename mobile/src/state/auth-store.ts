@@ -13,8 +13,6 @@ type AuthState = {
   token: string | null;
   userId: string | null;
   roles: string[];
-  language: "pl" | "en";
-  setLanguage: (language: "pl" | "en") => void;
   signIn: (name: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   restore: () => Promise<void>;
@@ -26,8 +24,6 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       userId: null,
       roles: [],
-      language: "pl",
-      setLanguage: (language) => set({ language }),
       signIn: async (name, password) => {
         const result = await request<{
           token: string;
