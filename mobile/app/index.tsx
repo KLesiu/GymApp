@@ -6,7 +6,7 @@ export default function Index() {
     <Redirect
       href={
         useAuthStore((state) => state.token)
-          ? "/(app)/(tabs)/today"
+          ? "/(app)/(tabs)/workout"
           : "/(auth)/welcome"
       }
     />

@@ -13,7 +13,7 @@ export default function SignUp() {
   const submit = async () => {
     try {
       await signUp(name, email, password);
-      router.replace("/(app)/(tabs)/today");
+      router.replace("/(app)/(tabs)/workout");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "REGISTER_FAILED");
     }

@@ -16,7 +16,7 @@ export default function SignIn() {
       router.replace(
         roles.length === 1 && roles[0] === "TRAINER"
           ? "/(app)/trainer-only"
-          : "/(app)/(tabs)/today",
+          : "/(app)/(tabs)/workout",
       );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "LOGIN_FAILED");
