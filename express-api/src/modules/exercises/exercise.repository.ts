@@ -1,4 +1,23 @@
-import type { ExerciseEloFormula, MuscleRegion, PrismaClient } from "@prisma/client"
+import type { BodyPart, ExerciseEloFormula, MuscleRegion, PrismaClient } from "@prisma/client"
+
+const bodyPartToMuscleRegion: Record<BodyPart, MuscleRegion> = {
+  WEIGHT: "CUSTOM",
+  BODY_FAT: "CUSTOM",
+  CHEST: "CHEST",
+  BACK: "BACK",
+  SHOULDERS: "SHOULDERS",
+  BICEPS: "BICEPS",
+  TRICEPS: "TRICEPS",
+  QUADS: "QUADS",
+  HAMSTRINGS: "HAMSTRINGS",
+  GLUTES: "GLUTES",
+  CORE: "CORE",
+  CALVES: "CALVES",
+  WAIST: "CORE",
+  HIPS: "GLUTES",
+  THIGH: "QUADS",
+  ARM: "BICEPS",
+}
 
 export class ExerciseRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -13,12 +32,16 @@ export class ExerciseRepository {
 
   async createExercise(
     ownerId: string,
-    muscleGroupId: string,
+    muscleGroupId: string | undefined,
     name: string,
+    bodyPart: BodyPart,
     formula: ExerciseEloFormula,
   ) {
+    const resolvedMuscleGroupId =
+      muscleGroupId ?? (await this.findOrCreateBodyPartMuscleGroup(ownerId, bodyPart)).id
+
     return this.prisma.exercise.create({
-      data: { ownerId, muscleGroupId, name, formula },
+      data: { ownerId, muscleGroupId: resolvedMuscleGroupId, name, bodyPart, formula },
     })
   }
 
@@ -43,12 +66,23 @@ export class ExerciseRepository {
     input: {
       readonly name?: string
       readonly muscleGroupId?: string
+      readonly bodyPart?: BodyPart
       readonly formula?: ExerciseEloFormula
     },
   ) {
     return this.prisma.exercise.updateMany({
       where: { id: exerciseId, ownerId },
       data: input,
+    })
+  }
+
+  private async findOrCreateBodyPartMuscleGroup(ownerId: string, bodyPart: BodyPart) {
+    const name = `${bodyPart} exercises`
+
+    return this.prisma.muscleGroup.upsert({
+      where: { ownerId_name: { ownerId, name } },
+      update: {},
+      create: { ownerId, name, region: bodyPartToMuscleRegion[bodyPart] },
     })
   }
 

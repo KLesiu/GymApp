@@ -14,7 +14,27 @@ export const muscleRegions = [
   "CUSTOM",
 ] as const
 export const exerciseFormulas = ["STANDARD", "STRENGTH", "VOLUME", "PULLUP_INVERSE"] as const
-export const bodyParts = ["WEIGHT", "BODY_FAT", "CHEST", "WAIST", "HIPS", "THIGH", "ARM"] as const
+export const exerciseBodyParts = [
+  "CHEST",
+  "BACK",
+  "SHOULDERS",
+  "BICEPS",
+  "TRICEPS",
+  "QUADS",
+  "HAMSTRINGS",
+  "GLUTES",
+  "CORE",
+  "CALVES",
+] as const
+export const bodyParts = [
+  "WEIGHT",
+  "BODY_FAT",
+  ...exerciseBodyParts,
+  "WAIST",
+  "HIPS",
+  "THIGH",
+  "ARM",
+] as const
 export const measurementUnits = ["KG", "CM", "PERCENT"] as const
 export const reportFieldTypes = ["TEXT", "NUMBER", "SCALE"] as const
 export const recurrenceUnits = ["DAY", "WEEK", "MONTH"] as const

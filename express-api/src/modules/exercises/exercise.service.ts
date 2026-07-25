@@ -1,4 +1,4 @@
-import type { ExerciseEloFormula, MuscleRegion } from "@prisma/client"
+import type { BodyPart, ExerciseEloFormula, MuscleRegion } from "@prisma/client"
 
 import { NotFoundError } from "../../core/errors/app-error"
 import type { ExerciseRepository } from "./exercise.repository"
@@ -18,15 +18,17 @@ export class ExerciseService {
 
   async createExercise(
     userId: string,
-    muscleGroupId: string,
+    muscleGroupId: string | undefined,
     name: string,
+    bodyPart: BodyPart,
     formula: ExerciseEloFormula,
   ) {
-    const exercise = await this.repository.createExercise(userId, muscleGroupId, name, formula)
+    const exercise = await this.repository.createExercise(userId, muscleGroupId, name, bodyPart, formula)
     return {
       _id: exercise.id,
       name: exercise.name,
       muscleGroupId: exercise.muscleGroupId,
+      bodyPart: exercise.bodyPart,
       formula: exercise.formula,
     }
   }
@@ -36,6 +38,7 @@ export class ExerciseService {
     return items.map((item) => ({
       _id: item.id,
       name: item.name,
+      bodyPart: item.bodyPart,
       formula: item.formula,
       muscleGroup: {
         _id: item.muscleGroup.id,
@@ -54,6 +57,7 @@ export class ExerciseService {
     return {
       _id: exercise.id,
       name: exercise.name,
+      bodyPart: exercise.bodyPart,
       formula: exercise.formula,
       muscleGroup: {
         _id: exercise.muscleGroup.id,
@@ -69,6 +73,7 @@ export class ExerciseService {
     input: {
       readonly name?: string
       readonly muscleGroupId?: string
+      readonly bodyPart?: BodyPart
       readonly formula?: ExerciseEloFormula
     },
   ) {

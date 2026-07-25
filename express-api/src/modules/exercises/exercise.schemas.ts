@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { exerciseFormulas, muscleRegions } from "../../shared/constants"
+import { exerciseBodyParts, exerciseFormulas, muscleRegions } from "../../shared/constants"
 
 export const muscleGroupSchema = z.object({
   name: z.string().min(1),
@@ -9,7 +9,8 @@ export const muscleGroupSchema = z.object({
 
 export const exerciseSchema = z.object({
   name: z.string().min(1),
-  muscleGroupId: z.string().uuid(),
+  bodyPart: z.enum(exerciseBodyParts),
+  muscleGroupId: z.string().uuid().optional(),
   formula: z.enum(exerciseFormulas).default("STANDARD"),
 })
 

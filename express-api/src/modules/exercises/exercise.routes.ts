@@ -60,6 +60,7 @@ export const buildExerciseRouter = (prisma: PrismaClient) => {
             getActorId(request),
             request.body.muscleGroupId,
             request.body.name,
+            request.body.bodyPart,
             request.body.formula,
           ),
         )
