@@ -1,6 +1,8 @@
 import { brand } from "@/config/brand";
-import i18next from "i18next";
+import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
+
+const i18next = createInstance();
 
 export const resources = {
   en: {
@@ -12,7 +14,6 @@ export const resources = {
       signUp: "Create account",
       workout: "Workout",
       history: "History",
-      progress: "Progress",
       coach: "Coach",
       more: "More",
       startWorkout: "Start workout",

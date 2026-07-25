@@ -17,7 +17,8 @@ import {
 import { formatDate, formatDateTime, formatNumber } from "@/i18n";
 import { Fragment, useMemo, useState } from "react";
 
-const dateKey = (date: string | Date) => new Date(date).toISOString().slice(0, 10);
+const dateKey = (date: string | Date) =>
+  new Date(date).toISOString().slice(0, 10);
 
 const shiftDate = (date: Date, days: number) => {
   const next = new Date(date);
@@ -25,8 +26,13 @@ const shiftDate = (date: Date, days: number) => {
   return next;
 };
 
-const getWorkoutDate = (workout: NonNullable<ReturnType<typeof useWorkouts>["data"]>[number]) =>
-  workout.completedAt ?? workout.createdAt ?? workout.startedAt ?? new Date().toISOString();
+const getWorkoutDate = (
+  workout: NonNullable<ReturnType<typeof useWorkouts>["data"]>[number],
+) =>
+  workout.completedAt ??
+  workout.createdAt ??
+  workout.startedAt ??
+  new Date().toISOString();
 
 export default function History() {
   const workouts = useWorkouts();
@@ -100,10 +106,14 @@ export default function History() {
                 gym={workout.gym ?? "Unknown gym"}
               />
               <Text variant="caption" tone="muted">
-                {exerciseCount} exercises · {totalSets} set(s) · {formatDateTime(workoutDate)}
+                {exerciseCount} exercises · {totalSets} set(s) ·{" "}
+                {formatDateTime(workoutDate)}
               </Text>
               {groups.map((group) => (
-                <ExerciseResultCard key={group.exerciseId} title={group.exerciseName}>
+                <ExerciseResultCard
+                  key={group.exerciseId}
+                  title={group.exerciseName}
+                >
                   {group.sets.map((set) => (
                     <ResultRow
                       key={set.id}

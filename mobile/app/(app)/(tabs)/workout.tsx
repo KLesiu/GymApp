@@ -13,9 +13,14 @@ export default function WorkoutTab() {
       <Card style={styles.startCard}>
         <Text variant="title">Start a workout</Text>
         <Text tone="muted">
-          {me.data?.name ? `${me.data.name}, choose your gym first, then select the training day you want to run.` : "Choose your gym first, then select the training day you want to run."}
+          {me.data?.name
+            ? `${me.data.name}, choose your gym first, then select the training day you want to run.`
+            : "Choose your gym first, then select the training day you want to run."}
         </Text>
-        <Button label="Start" onPress={() => router.push("/(app)/workout/setup")} />
+        <Button
+          label="Start"
+          onPress={() => router.push("/(app)/(tabs)/workout-setup")}
+        />
       </Card>
     </Screen>
   );

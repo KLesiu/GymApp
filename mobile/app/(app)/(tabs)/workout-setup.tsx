@@ -1,10 +1,10 @@
 import {
   type Gym,
-  type Plan,
+  type PlanDay,
+  useActivePlan,
   useCreateWorkout,
   useExercises,
   useGyms,
-  usePlans,
   useWorkouts,
 } from "@/api/domain";
 import { EmptyState, ErrorState, Screen, Text } from "@/components/primitives";
@@ -14,11 +14,11 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 
-type SetupStep = "gym" | "plan";
+type SetupStep = "gym" | "day";
 
 export default function WorkoutSetup() {
   const gyms = useGyms();
-  const plans = usePlans();
+  const activePlan = useActivePlan();
   const exercises = useExercises();
   const workouts = useWorkouts();
   const create = useCreateWorkout();
@@ -34,7 +34,8 @@ export default function WorkoutSetup() {
   const lastWorkoutByGym = useMemo(() => {
     const map = new Map<string, NonNullable<typeof workouts.data>[number]>();
     for (const workout of workouts.data ?? []) {
-      if (workout.gymId && !map.has(workout.gymId)) map.set(workout.gymId, workout);
+      if (workout.gymId && !map.has(workout.gymId))
+        map.set(workout.gymId, workout);
     }
     return map;
   }, [workouts]);
@@ -42,28 +43,27 @@ export default function WorkoutSetup() {
   const chooseGym = (gym: Gym) => {
     setGymId(gym._id);
     setMessage(null);
-    setStep("plan");
+    setStep("day");
   };
 
-  const startPlan = async (plan: Plan) => {
+  const startPlanDay = async (day: PlanDay) => {
     if (!selectedGym) {
       setMessage("Choose a gym first.");
       setStep("gym");
       return;
     }
 
-    const selectedDay = plan.days[0] ?? null;
-    if (!selectedDay) {
-      setMessage("This plan has no training day.");
+    if (!activePlan.data) {
+      setMessage("Set an active plan first.");
       return;
     }
 
-    const sets = selectedDay.exercises.flatMap((exercise) =>
+    const sets = day.exercises.flatMap((exercise) =>
       Array.from({ length: exercise.series }, (_unused, index) => ({
         exerciseId: exercise.exerciseId,
         series: index + 1,
-        reps: exercise.repsTarget,
-        weight: 0,
+        reps: null,
+        weight: null,
         unit: "KILOGRAMS" as const,
       })),
     );
@@ -76,22 +76,25 @@ export default function WorkoutSetup() {
     setMessage(null);
     const workout = await create.mutateAsync({
       gymId: selectedGym._id,
-      planId: plan._id,
-      planDayId: selectedDay._id,
+      planId: activePlan.data._id,
+      planDayId: day._id,
       startedAt: new Date().toISOString(),
       sets,
     });
-    router.push(`/(app)/workout/${workout.id ?? workout._id}`);
+    router.push({
+      pathname: "/(app)/(tabs)/workout-session/[workoutId]",
+      params: { workoutId: workout.id ?? workout._id },
+    });
   };
 
-  if (gyms.isError || plans.isError) {
+  if (gyms.isError || activePlan.isError) {
     return (
       <Screen style={styles.screen}>
         <ErrorState
           message="Could not load workout setup."
           onRetry={() => {
             void gyms.refetch();
-            void plans.refetch();
+            void activePlan.refetch();
           }}
         />
       </Screen>
@@ -123,7 +126,7 @@ export default function WorkoutSetup() {
               title="Create a gym first"
               body="Workout sessions need a gym context."
               actionLabel="Open gyms"
-              onAction={() => router.push("/(app)/gyms")}
+              onAction={() => router.push("/(app)/(tabs)/gyms")}
             />
           )}
         </>
@@ -132,26 +135,40 @@ export default function WorkoutSetup() {
           <Text variant="title" style={styles.title}>
             Choose a training day
           </Text>
-          {plans.data?.length ? (
-            plans.data.map((plan) => (
+          {activePlan.data ? (
+            <Text tone="muted">Active plan: {activePlan.data.name}</Text>
+          ) : null}
+          {activePlan.data?.days.length ? (
+            activePlan.data.days.map((day) => (
               <Pressable
                 accessibilityRole="button"
                 disabled={create.isPending || exercises.isLoading}
-                key={plan._id}
-                onPress={() => void startPlan(plan)}
+                key={day._id}
+                onPress={() => void startPlanDay(day)}
                 style={styles.choiceCard}
               >
                 <Text variant="heading1" style={styles.cardTitle}>
-                  {plan.days[0]?.name ?? plan.name}
+                  {day.name}
+                </Text>
+                <Text style={styles.cardSubtitle}>
+                  {day.exercises.length} exercise(s)
                 </Text>
               </Pressable>
             ))
           ) : (
             <EmptyState
-              title="Create a plan first"
-              body="Plans define exercises and set slots for this workout."
+              title={
+                activePlan.data
+                  ? "Add a training day first"
+                  : "Set an active plan first"
+              }
+              body={
+                activePlan.data
+                  ? "Training days define exercises and set slots for this workout."
+                  : "Plans are activated on the Plans screen."
+              }
               actionLabel="Open plans"
-              onAction={() => router.push("/(app)/plans")}
+              onAction={() => router.push("/(app)/(tabs)/plans")}
             />
           )}
         </>
@@ -168,15 +185,24 @@ const GymCard = ({
   onPress,
 }: {
   readonly gym: Gym;
-  readonly lastWorkout?: NonNullable<ReturnType<typeof useWorkouts>["data"]>[number] | undefined;
+  readonly lastWorkout?:
+    | NonNullable<ReturnType<typeof useWorkouts>["data"]>[number]
+    | undefined;
   readonly onPress: () => void;
 }) => (
-  <Pressable accessibilityRole="button" onPress={onPress} style={styles.choiceCard}>
+  <Pressable
+    accessibilityRole="button"
+    onPress={onPress}
+    style={styles.choiceCard}
+  >
     <Text variant="heading1" style={styles.cardTitle}>
       {gym.name}
     </Text>
     <Text style={styles.cardSubtitle}>
-      Last workout: {lastWorkout?.completedAt ? `${formatDate(lastWorkout.completedAt)} ${lastWorkout.planDay?.name ?? ""}` : "—"}
+      Last workout:{" "}
+      {lastWorkout?.completedAt
+        ? `${formatDate(lastWorkout.completedAt)} ${lastWorkout.planDay?.name ?? ""}`
+        : "—"}
     </Text>
   </Pressable>
 );

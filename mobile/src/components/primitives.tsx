@@ -44,9 +44,14 @@ export const Screen = ({
     </View>
   );
   return (
-    <SafeAreaView style={[styles.safe, backgroundColor ? { backgroundColor } : undefined]}>
+    <SafeAreaView
+      style={[styles.safe, backgroundColor ? { backgroundColor } : undefined]}
+    >
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} style={backgroundColor ? { backgroundColor } : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          style={backgroundColor ? { backgroundColor } : undefined}
+        >
           {body}
         </ScrollView>
       ) : (
@@ -82,7 +87,7 @@ export const Button = ({
   label: string;
   onPress?: (() => void) | undefined;
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
 }) => (
   <Pressable
     accessibilityRole="button"
@@ -94,12 +99,22 @@ export const Button = ({
         ? styles.primary
         : variant === "secondary"
           ? styles.secondary
-          : styles.ghost,
+          : variant === "danger"
+            ? styles.danger
+            : styles.ghost,
       disabled && styles.disabled,
       pressed && !disabled && styles.pressed,
     ]}
   >
-    <Text style={variant === "primary" ? styles.primaryText : undefined}>
+    <Text
+      style={
+        variant === "primary"
+          ? styles.primaryText
+          : variant === "danger"
+            ? styles.dangerText
+            : undefined
+      }
+    >
       {label}
     </Text>
   </Pressable>
@@ -178,7 +193,7 @@ export const Dialog = ({
       <Card>
         <Text variant="subtitle">{title}</Text>
         <Text tone="muted">{body}</Text>
-        <Button label={confirmLabel} onPress={onConfirm} />
+        <Button label={confirmLabel} variant="danger" onPress={onConfirm} />
         <Button label="Cancel" variant="ghost" onPress={onCancel} />
       </Card>
     </View>
@@ -327,7 +342,13 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   ghost: { backgroundColor: "transparent" },
+  danger: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: theme.colors.danger,
+  },
   primaryText: { color: theme.colors.actionText },
+  dangerText: { color: theme.colors.danger },
   disabled: { opacity: 0.5 },
   pressed: { transform: [{ scale: 0.98 }] },
   icon: {

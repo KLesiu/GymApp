@@ -3,12 +3,24 @@ import {
   useUpdateWorkoutSets,
   useWorkout,
 } from "@/api/domain";
-import { Dialog, EmptyState, ErrorState, Screen, Text } from "@/components/primitives";
+import {
+  Dialog,
+  EmptyState,
+  ErrorState,
+  Screen,
+  Text,
+} from "@/components/primitives";
 import { theme } from "@/theme/tokens";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 
 type SetDraft = {
   readonly clientKey: string;
@@ -27,7 +39,9 @@ export default function ActiveWorkout() {
   const updateSets = useUpdateWorkoutSets();
   const finalize = useFinalizeWorkout();
   const [sets, setSets] = useState<SetDraft[]>([]);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
+    null,
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [hasLocalEdits, setHasLocalEdits] = useState(false);
@@ -40,13 +54,14 @@ export default function ActiveWorkout() {
       exerciseId: set.exerciseId,
       exerciseName: set.exerciseName,
       series: set.series,
-      reps: String(set.reps),
-      weight: String(set.weight),
+      reps: "",
+      weight: "",
       unit: set.unit,
     }));
     setSets(nextSets);
     setSelectedExerciseId((current) => {
-      if (current && nextSets.some((set) => set.exerciseId === current)) return current;
+      if (current && nextSets.some((set) => set.exerciseId === current))
+        return current;
       return nextSets[0]?.exerciseId ?? null;
     });
   }, [hasLocalEdits, workout.data]);
@@ -65,13 +80,21 @@ export default function ActiveWorkout() {
   }, [sets]);
 
   const selectedSets =
-    groupedSets.find((group) => group[0]?.exerciseId === selectedExerciseId) ?? groupedSets[0] ?? [];
+    groupedSets.find((group) => group[0]?.exerciseId === selectedExerciseId) ??
+    groupedSets[0] ??
+    [];
   const selectedExercise = selectedSets[0];
 
-  const updateSet = (clientKey: string, field: "reps" | "weight", value: string) => {
+  const updateSet = (
+    clientKey: string,
+    field: "reps" | "weight",
+    value: string,
+  ) => {
     setHasLocalEdits(true);
     setSets((current) =>
-      current.map((set) => (set.clientKey === clientKey ? { ...set, [field]: value } : set)),
+      current.map((set) =>
+        set.clientKey === clientKey ? { ...set, [field]: value } : set,
+      ),
     );
   };
 
@@ -79,7 +102,8 @@ export default function ActiveWorkout() {
     if (!selectedExercise) return;
     setHasLocalEdits(true);
     const lastSet = selectedSets[selectedSets.length - 1] ?? selectedExercise;
-    const nextSeries = Math.max(...selectedSets.map((set) => set.series), 0) + 1;
+    const nextSeries =
+      Math.max(...selectedSets.map((set) => set.series), 0) + 1;
     setSets((current) => [
       ...current,
       {
@@ -87,8 +111,8 @@ export default function ActiveWorkout() {
         exerciseId: selectedExercise.exerciseId,
         exerciseName: selectedExercise.exerciseName,
         series: nextSeries,
-        reps: lastSet.reps,
-        weight: lastSet.weight,
+        reps: "",
+        weight: "",
         unit: lastSet.unit,
       },
     ]);
@@ -98,7 +122,9 @@ export default function ActiveWorkout() {
   const removeSeries = () => {
     if (selectedSets.length <= 1) return;
     setHasLocalEdits(true);
-    const lastSet = [...selectedSets].sort((left, right) => right.series - left.series)[0];
+    const lastSet = [...selectedSets].sort(
+      (left, right) => right.series - left.series,
+    )[0];
     if (!lastSet) return;
     setSets((current) =>
       current
@@ -135,7 +161,9 @@ export default function ActiveWorkout() {
         exerciseId: set.exerciseId,
         series: set.series,
         reps: /^\d+$/.test(repsText) ? Number(repsText) : Number.NaN,
-        weight: /^\d+(\.\d+)?$/.test(weightText) ? Number(weightText) : Number.NaN,
+        weight: /^\d+(\.\d+)?$/.test(weightText)
+          ? Number(weightText)
+          : Number.NaN,
         unit: set.unit,
       };
     });
@@ -170,11 +198,18 @@ export default function ActiveWorkout() {
     }
 
     finalize.mutate(
-      { workoutId, operationId: buildFinalizeOperationId(workoutId, parsed), sets: parsed },
+      {
+        workoutId,
+        operationId: buildFinalizeOperationId(workoutId, parsed),
+        sets: parsed,
+      },
       {
         onSuccess: () => {
           setHasLocalEdits(false);
-          router.replace(`/(app)/workout/${workoutId}/summary`);
+          router.replace({
+            pathname: "/(app)/(tabs)/workout-summary/[workoutId]",
+            params: { workoutId },
+          });
         },
         onError: () => setMessage("Could not finalize workout."),
       },
@@ -196,7 +231,11 @@ export default function ActiveWorkout() {
     <Screen scroll={false} style={styles.screen}>
       <View style={styles.topBar}>
         <View style={styles.leftHeaderTools}>
-          <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.roundIcon}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.back()}
+            style={styles.roundIcon}
+          >
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
         </View>
@@ -237,7 +276,10 @@ export default function ActiveWorkout() {
                 accessibilityLabel="Remove series"
                 disabled={selectedSets.length <= 1}
                 onPress={removeSeries}
-                style={[styles.toolButton, selectedSets.length <= 1 && styles.disabledTool]}
+                style={[
+                  styles.toolButton,
+                  selectedSets.length <= 1 && styles.disabledTool,
+                ]}
               >
                 <Ionicons name="remove" size={22} color={colors.text} />
               </Pressable>
@@ -255,12 +297,20 @@ export default function ActiveWorkout() {
                 onPress={() => removeExerciseFromSession()}
                 style={styles.toolButton}
               >
-                <Ionicons name="trash-outline" size={22} color={colors.danger} />
+                <Ionicons
+                  name="trash-outline"
+                  size={22}
+                  color={colors.danger}
+                />
               </Pressable>
             </View>
 
             <Text style={styles.scoreLine}>
-              Last training scores at <Text style={styles.scoreHighlight}>{workout.data?.gym ?? "this gym"}</Text>: —
+              Last training scores at{" "}
+              <Text style={styles.scoreHighlight}>
+                {workout.data?.gym ?? "this gym"}
+              </Text>
+              : —
             </Text>
 
             <View style={styles.tableHeader}>
@@ -275,15 +325,21 @@ export default function ActiveWorkout() {
                 </View>
                 <TextInput
                   value={set.reps}
-                  onChangeText={(value) => updateSet(set.clientKey, "reps", value)}
+                  onChangeText={(value) =>
+                    updateSet(set.clientKey, "reps", value)
+                  }
                   keyboardType="numeric"
+                  placeholder="Required"
                   placeholderTextColor={colors.muted}
                   style={styles.darkInput}
                 />
                 <TextInput
                   value={set.weight}
-                  onChangeText={(value) => updateSet(set.clientKey, "weight", value)}
+                  onChangeText={(value) =>
+                    updateSet(set.clientKey, "weight", value)
+                  }
                   keyboardType="numeric"
+                  placeholder="Required"
                   placeholderTextColor={colors.muted}
                   style={styles.darkInput}
                 />
@@ -295,29 +351,43 @@ export default function ActiveWorkout() {
               {groupedSets.map((group) => {
                 const firstSet = group[0];
                 if (!firstSet) return null;
-                const selected = firstSet.exerciseId === selectedExercise.exerciseId;
+                const selected =
+                  firstSet.exerciseId === selectedExercise.exerciseId;
                 return (
                   <Pressable
                     accessibilityRole="button"
                     key={firstSet.exerciseId}
                     onPress={() => setSelectedExerciseId(firstSet.exerciseId)}
-                    style={[styles.exerciseListItem, selected && styles.exerciseListItemActive]}
+                    style={[
+                      styles.exerciseListItem,
+                      selected && styles.exerciseListItemActive,
+                    ]}
                   >
                     <View style={styles.exerciseListText}>
-                      <Text variant="heading2" style={selected ? styles.lightText : styles.dimText}>
+                      <Text
+                        variant="heading2"
+                        style={selected ? styles.lightText : styles.dimText}
+                      >
                         {firstSet.exerciseName}
                       </Text>
                       <Text style={styles.mutedText}>
-                        Set {group.length} Rep {group.map((set) => set.reps).join("/")}
+                        Set {group.length} Rep{" "}
+                        {group.map((set) => set.reps || "—").join("/")}
                       </Text>
                     </View>
                     {selected ? (
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Remove exercise from this session"
-                        onPress={() => removeExerciseFromSession(firstSet.exerciseId)}
+                        onPress={() =>
+                          removeExerciseFromSession(firstSet.exerciseId)
+                        }
                       >
-                        <Ionicons name="trash-outline" size={28} color={colors.muted} />
+                        <Ionicons
+                          name="trash-outline"
+                          size={28}
+                          color={colors.muted}
+                        />
                       </Pressable>
                     ) : null}
                   </Pressable>
@@ -335,23 +405,37 @@ export default function ActiveWorkout() {
 
       <View style={styles.bottomDock}>
         {message ? (
-          <Text style={message === "Results saved." ? styles.successText : styles.errorText}>
+          <Text
+            style={
+              message === "Results saved."
+                ? styles.successText
+                : styles.errorText
+            }
+          >
             {message}
           </Text>
         ) : null}
 
         <View style={styles.bottomActions}>
-          <Pressable accessibilityRole="button" onPress={() => setConfirm(true)} style={styles.deleteButton}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setConfirm(true)}
+            style={styles.deleteButton}
+          >
             <Text style={styles.bottomButtonText}>Delete</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            disabled={updateSets.isPending || finalize.isPending || !sets.length}
+            disabled={
+              updateSets.isPending || finalize.isPending || !sets.length
+            }
             onPress={() => void finalizeWorkout()}
             style={styles.saveButton}
           >
             <Text style={styles.saveButtonText}>
-              {updateSets.isPending || finalize.isPending ? "Saving..." : "Save training"}
+              {updateSets.isPending || finalize.isPending
+                ? "Saving..."
+                : "Save training"}
             </Text>
           </Pressable>
         </View>
@@ -362,7 +446,7 @@ export default function ActiveWorkout() {
         title="Discard draft?"
         body="Unfinished workout input will be lost."
         confirmLabel="Discard"
-        onConfirm={() => router.back()}
+        onConfirm={() => router.replace("/(app)/(tabs)/workout")}
         onCancel={() => setConfirm(false)}
       />
     </Screen>
@@ -452,7 +536,11 @@ const styles = StyleSheet.create({
   disabledTool: { opacity: 0.4 },
   scoreLine: { color: colors.text, fontSize: 16, lineHeight: 24 },
   scoreHighlight: { color: colors.accent, fontWeight: "700" },
-  tableHeader: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
+  tableHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.space.sm,
+  },
   columnSeries: { width: 72, color: colors.text, fontSize: 16 },
   columnInput: { flex: 1, color: colors.text, fontSize: 16 },
   tableRow: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },

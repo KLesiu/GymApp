@@ -19,7 +19,12 @@ export type ExerciseResultGroup = {
 };
 
 export const AppLogoMark = ({ size = 56 }: { readonly size?: number }) => (
-  <View style={[styles.logoMark, { width: size, height: size, borderRadius: size * 0.22 }]}>
+  <View
+    style={[
+      styles.logoMark,
+      { width: size, height: size, borderRadius: size * 0.22 },
+    ]}
+  >
     <View style={[styles.logoBracket, styles.logoBracketLeft]} />
     <View style={[styles.logoBracket, styles.logoBracketRight]} />
     <View style={styles.logoBar} />
@@ -80,7 +85,8 @@ export const DateRail = ({
   readonly onNext?: () => void;
   readonly onSelectDate?: (date: Date) => void;
 }) => {
-  const currentMonth = dates.find((item) => item.selected)?.date ?? dates[1]?.date ?? new Date();
+  const currentMonth =
+    dates.find((item) => item.selected)?.date ?? dates[1]?.date ?? new Date();
   return (
     <View
       style={styles.dateRailWrap}
@@ -94,10 +100,16 @@ export const DateRail = ({
       }}
     >
       <Text variant="title" style={styles.monthTitle}>
-        {currentMonth.toLocaleDateString("en", { month: "long", year: "numeric" })}
+        {currentMonth.toLocaleDateString("en", {
+          month: "long",
+          year: "numeric",
+        })}
       </Text>
       <View style={styles.dateRail}>
-        <RailButton name="chevron-back" {...(onPrevious ? { onPress: onPrevious } : {})} />
+        <RailButton
+          name="chevron-back"
+          {...(onPrevious ? { onPress: onPrevious } : {})}
+        />
         {dates.map((item) => (
           <Pressable
             accessibilityRole="button"
@@ -110,15 +122,23 @@ export const DateRail = ({
               tone={item.selected ? "default" : "muted"}
               style={styles.weekday}
             >
-              {item.date.toLocaleDateString("en", { weekday: "short" }).toUpperCase()}
+              {item.date
+                .toLocaleDateString("en", { weekday: "short" })
+                .toUpperCase()}
             </Text>
-            <Text variant="heading2" style={item.selected ? styles.selectedDateText : undefined}>
+            <Text
+              variant="heading2"
+              style={item.selected ? styles.selectedDateText : undefined}
+            >
               {item.date.getDate()}
             </Text>
             {item.hasWorkout ? <View style={styles.dateDot} /> : null}
           </Pressable>
         ))}
-        <RailButton name="chevron-forward" {...(onNext ? { onPress: onNext } : {})} />
+        <RailButton
+          name="chevron-forward"
+          {...(onNext ? { onPress: onNext } : {})}
+        />
       </View>
     </View>
   );
@@ -129,8 +149,15 @@ let touchStartX = 0;
 const RailButton = ({
   name,
   onPress,
-}: { readonly name: ComponentProps<typeof Ionicons>["name"]; readonly onPress?: () => void }) => (
-  <Pressable accessibilityRole="button" onPress={onPress} style={styles.railButton}>
+}: {
+  readonly name: ComponentProps<typeof Ionicons>["name"];
+  readonly onPress?: () => void;
+}) => (
+  <Pressable
+    accessibilityRole="button"
+    onPress={onPress}
+    style={styles.railButton}
+  >
     <Ionicons name={name} size={24} color={theme.colors.actionText} />
   </Pressable>
 );
@@ -178,25 +205,39 @@ export const ResultRow = ({
   </View>
 );
 
-export const FloatingMenuButton = ({ onPress }: { readonly onPress?: () => void }) => (
-  <Pressable accessibilityRole="button" onPress={onPress} style={styles.floatingButton}>
+export const FloatingMenuButton = ({
+  onPress,
+}: { readonly onPress?: () => void }) => (
+  <Pressable
+    accessibilityRole="button"
+    onPress={onPress}
+    style={styles.floatingButton}
+  >
     <Ionicons name="menu" size={38} color={theme.colors.actionText} />
   </Pressable>
 );
 
-export const groupExerciseResults = <T extends {
-  readonly _id?: string;
-  readonly id?: string;
-  readonly exerciseId: string;
-  readonly exerciseName: string;
-  readonly series: number;
-  readonly reps: number | string;
-  readonly weight: number | string;
-  readonly unit: string;
-}>(sets: readonly T[]): ExerciseResultGroup[] => {
+export const groupExerciseResults = <
+  T extends {
+    readonly _id?: string;
+    readonly id?: string;
+    readonly exerciseId: string;
+    readonly exerciseName: string;
+    readonly series: number;
+    readonly reps: number | string | null;
+    readonly weight: number | string | null;
+    readonly unit: string;
+  },
+>(
+  sets: readonly T[],
+): ExerciseResultGroup[] => {
   const grouped = new Map<string, ExerciseResultGroup>();
 
   for (const set of sets) {
+    if (set.reps === null || set.weight === null) {
+      continue;
+    }
+
     const current = grouped.get(set.exerciseId);
     const row = {
       id: set.id ?? set._id ?? `${set.exerciseId}:${set.series}`,

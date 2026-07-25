@@ -3,12 +3,15 @@ import {
   type Exercise,
   type ExerciseBodyPart,
   exerciseBodyParts,
+  useDeleteExercise,
   useExercises,
+  useUpdateExercise,
   useUpsertExercise,
 } from "@/api/domain";
 import {
   Button,
   Card,
+  Dialog,
   EmptyState,
   ErrorState,
   IconButton,
@@ -42,15 +45,22 @@ const resolveBodyPart = (exercise: Exercise): ExerciseBodyPart | undefined => {
 export default function Exercises() {
   const exercises = useExercises();
   const create = useUpsertExercise();
+  const update = useUpdateExercise();
+  const remove = useDeleteExercise();
   const [query, setQuery] = useState("");
   const [selectedBodyPart, setSelectedBodyPart] =
     useState<ExerciseBodyPart | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(
+    null,
+  );
   const [draftName, setDraftName] = useState("");
-  const [draftBodyPart, setDraftBodyPart] =
-    useState<ExerciseBodyPart>("CHEST");
+  const [draftBodyPart, setDraftBodyPart] = useState<ExerciseBodyPart>("CHEST");
   const [message, setMessage] = useState<string | null>(null);
   const trimmedName = draftName.trim();
+  const modalOpen = isCreateOpen || editingExercise !== null;
+  const saving = create.isPending || update.isPending;
 
   const exercisesByBodyPart = useMemo(() => {
     const grouped = new Map<ExerciseBodyPart, Exercise[]>();
@@ -67,23 +77,67 @@ export default function Exercises() {
   const selectedExercises = useMemo(() => {
     if (!selectedBodyPart) return [];
     const normalizedQuery = query.toLowerCase();
-    return (exercisesByBodyPart.get(selectedBodyPart) ?? []).filter((exercise) =>
-      exercise.name.toLowerCase().includes(normalizedQuery),
+    return (exercisesByBodyPart.get(selectedBodyPart) ?? []).filter(
+      (exercise) => exercise.name.toLowerCase().includes(normalizedQuery),
     );
   }, [exercisesByBodyPart, query, selectedBodyPart]);
 
   const closeCreate = () => {
     setIsCreateOpen(false);
+    setEditingExercise(null);
+    setDraftName("");
+    setDraftBodyPart("CHEST");
     setMessage(null);
   };
 
-  const createExercise = () => {
+  const openCreate = () => {
+    setEditingExercise(null);
+    setDraftName("");
+    setDraftBodyPart(selectedBodyPart ?? "CHEST");
+    setMessage(null);
+    setIsCreateOpen(true);
+  };
+
+  const openEdit = (exercise: Exercise) => {
+    const bodyPart = resolveBodyPart(exercise) ?? selectedBodyPart ?? "CHEST";
+    setIsCreateOpen(false);
+    setEditingExercise(exercise);
+    setDraftName(exercise.name);
+    setDraftBodyPart(bodyPart);
+    setMessage(null);
+  };
+
+  const saveExercise = () => {
     if (!trimmedName) {
       setMessage("Enter an exercise name first.");
       return;
     }
 
     setMessage(null);
+
+    if (editingExercise) {
+      update.mutate(
+        {
+          exerciseId: editingExercise._id,
+          body: { name: trimmedName, bodyPart: draftBodyPart },
+        },
+        {
+          onSuccess: () => {
+            setSelectedBodyPart(draftBodyPart);
+            closeCreate();
+          },
+          onError: (error) => {
+            setMessage(
+              error instanceof ApiError
+                ? error.code
+                : "Could not update exercise.",
+            );
+          },
+        },
+      );
+      return;
+    }
+
     create.mutate(
       {
         name: trimmedName,
@@ -107,6 +161,19 @@ export default function Exercises() {
     );
   };
 
+  const deleteExercise = () => {
+    if (!deletingExercise) return;
+    remove.mutate(deletingExercise._id, {
+      onSuccess: () => setDeletingExercise(null),
+      onError: (error) => {
+        setMessage(
+          error instanceof ApiError ? error.code : "Could not delete exercise.",
+        );
+        setDeletingExercise(null);
+      },
+    });
+  };
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -118,11 +185,7 @@ export default function Exercises() {
               : "Choose a body part first"}
           </Text>
         </View>
-        <IconButton
-          name="add"
-          label="Create exercise"
-          onPress={() => setIsCreateOpen(true)}
-        />
+        <IconButton name="add" label="Create exercise" onPress={openCreate} />
       </View>
 
       {exercises.isError ? (
@@ -150,6 +213,24 @@ export default function Exercises() {
                 <Text tone="muted">
                   {bodyPartLabels[selectedBodyPart]} · {exercise.formula}
                 </Text>
+                {exercise.isGlobal ? (
+                  <Text variant="caption" tone="muted">
+                    Library exercise
+                  </Text>
+                ) : (
+                  <View style={styles.actionRow}>
+                    <Button
+                      label="Edit"
+                      variant="secondary"
+                      onPress={() => openEdit(exercise)}
+                    />
+                    <Button
+                      label="Delete"
+                      variant="danger"
+                      onPress={() => setDeletingExercise(exercise)}
+                    />
+                  </View>
+                )}
               </Card>
             ))
           ) : (
@@ -182,10 +263,12 @@ export default function Exercises() {
         })
       )}
 
-      <Modal transparent visible={isCreateOpen} animationType="fade">
+      <Modal transparent visible={modalOpen} animationType="fade">
         <View style={styles.backdrop}>
           <Card style={styles.modalCard}>
-            <Text variant="subtitle">Create exercise</Text>
+            <Text variant="subtitle">
+              {editingExercise ? "Edit exercise" : "Create exercise"}
+            </Text>
             <TextField
               label="Name"
               value={draftName}
@@ -213,14 +296,32 @@ export default function Exercises() {
             </View>
             {message ? <Text tone="danger">{message}</Text> : null}
             <Button
-              label={create.isPending ? "Creating..." : "Create"}
-              disabled={create.isPending || !trimmedName}
-              onPress={createExercise}
+              label={
+                saving
+                  ? "Saving..."
+                  : editingExercise
+                    ? "Save changes"
+                    : "Create"
+              }
+              disabled={saving || !trimmedName}
+              onPress={saveExercise}
             />
             <Button label="Cancel" variant="ghost" onPress={closeCreate} />
           </Card>
         </View>
       </Modal>
+      <Dialog
+        visible={deletingExercise !== null}
+        title="Delete exercise?"
+        body={
+          deletingExercise
+            ? `Remove ${deletingExercise.name} from your exercises?`
+            : "Remove this exercise?"
+        }
+        confirmLabel={remove.isPending ? "Deleting..." : "Delete"}
+        onConfirm={deleteExercise}
+        onCancel={() => setDeletingExercise(null)}
+      />
     </Screen>
   );
 }
@@ -238,6 +339,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  actionRow: { flexDirection: "row", gap: theme.space.sm },
   backdrop: {
     flex: 1,
     justifyContent: "center",

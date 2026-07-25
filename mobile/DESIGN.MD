@@ -160,11 +160,12 @@ Cienie powinny być minimalne. Hierarchię budujemy przede wszystkim powierzchni
 
 Główne zakładki:
 
-1. **Dzisiaj**
-2. **Trening**
-3. **Postęp**
-4. **Współpraca**
-5. **Więcej**
+1. **Workout**
+2. **History**
+3. **Coach**
+4. **More**
+
+Ekrany pomocnicze, takie jak plany, ćwiczenia, siłownie, pomiary, setup treningu, aktywna sesja i summary, są ukrytymi route’ami w tab navigatorze. Dolne menu pozostaje widoczne na tych ekranach i znika wyłącznie pod maską modala/popupu.
 
 Aktywna zakładka używa `contextDark`. Nieaktywne ikony używają `textMuted`. Centralna akcja treningowa może być mocniej wyróżniona, ale nie może wyglądać jak osobny branding.
 

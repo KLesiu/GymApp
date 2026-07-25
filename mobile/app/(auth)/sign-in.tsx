@@ -15,7 +15,7 @@ export default function SignIn() {
       const roles = useAuthStore.getState().roles;
       router.replace(
         roles.length === 1 && roles[0] === "TRAINER"
-          ? "/(app)/trainer-only"
+          ? "/(app)/(tabs)/trainer-only"
           : "/(app)/(tabs)/workout",
       );
     } catch (caught) {

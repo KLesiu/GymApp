@@ -25,27 +25,27 @@ export default function More() {
       <Button
         label="Plans"
         variant="secondary"
-        onPress={() => router.push("/(app)/plans")}
+        onPress={() => router.push("/(app)/(tabs)/plans")}
       />
       <Button
         label="Exercises"
         variant="secondary"
-        onPress={() => router.push("/(app)/exercises")}
+        onPress={() => router.push("/(app)/(tabs)/exercises")}
       />
       <Button
         label="Gyms"
         variant="secondary"
-        onPress={() => router.push("/(app)/gyms")}
+        onPress={() => router.push("/(app)/(tabs)/gyms")}
       />
       <Button
         label="Measurements"
         variant="secondary"
-        onPress={() => router.push("/(app)/measurements")}
+        onPress={() => router.push("/(app)/(tabs)/measurements")}
       />
       <Button
         label="Profile"
         variant="secondary"
-        onPress={() => router.push("/(app)/profile")}
+        onPress={() => router.push("/(app)/(tabs)/profile")}
       />
       <View style={styles.logoutSection}>
         <Text variant="caption" tone="muted">
