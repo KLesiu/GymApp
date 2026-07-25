@@ -1,18 +1,22 @@
 import {
   useEloChart,
+  useMe,
   useMeasurementTrends,
   useRanking,
   useWorkouts,
 } from "@/api/domain";
 import { ChartCard, Metric, Screen, Text } from "@/components/primitives";
+import { TrainingHeader } from "@/components/workout-layout";
 
 export default function Progress() {
+  const me = useMe();
   const elo = useEloChart();
   const ranking = useRanking();
   const workouts = useWorkouts();
   const trend = useMeasurementTrends();
   return (
-    <Screen title="Progress">
+    <Screen>
+      <TrainingHeader title="Progress" name={me.data?.name ?? "Athlete"} />
       <Metric label="Current Elo" value={elo.data?.at(-1)?.newElo ?? "—"} />
       <Metric label="Ranking entries" value={ranking.data?.total ?? "—"} />
       <ChartCard

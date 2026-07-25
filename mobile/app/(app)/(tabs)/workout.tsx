@@ -1,39 +1,31 @@
-import { useActivePlan, useGyms } from "@/api/domain";
-import {
-  Button,
-  Card,
-  EmptyState,
-  Screen,
-  Text,
-} from "@/components/primitives";
+import { useMe } from "@/api/domain";
+import { Button, Card, Screen, Text } from "@/components/primitives";
+import { TrainingHeader } from "@/components/workout-layout";
 import { router } from "expo-router";
+import { StyleSheet } from "react-native";
 
 export default function WorkoutTab() {
-  const gyms = useGyms();
-  const plan = useActivePlan();
+  const me = useMe();
+
   return (
-    <Screen title="Workout">
-      <Card>
-        <Text variant="subtitle">Ready state</Text>
+    <Screen style={styles.screen}>
+      <TrainingHeader title="Workout" name={me.data?.name ?? "Athlete"} />
+      <Card style={styles.startCard}>
+        <Text variant="title">Start a workout</Text>
         <Text tone="muted">
-          Choose a gym before training so records and benchmarks stay tied to
-          the right location.
+          {me.data?.name ? `${me.data.name}, choose your gym first, then select the training day you want to run.` : "Choose your gym first, then select the training day you want to run."}
         </Text>
+        <Button label="Start" onPress={() => router.push("/(app)/workout/setup")} />
       </Card>
-      {gyms.data?.length ? (
-        <Button
-          label="Set up workout"
-          onPress={() => router.push("/(app)/workout/setup")}
-        />
-      ) : (
-        <EmptyState
-          title="Create a gym first"
-          body="Comparative results are scoped to a location."
-          actionLabel="Open gyms"
-          onAction={() => router.push("/(app)/gyms")}
-        />
-      )}
-      <Text tone="muted">Active plan: {plan.data?.name ?? "None"}</Text>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    justifyContent: "space-between",
+  },
+  startCard: {
+    alignItems: "center",
+  },
+});

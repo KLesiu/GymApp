@@ -1,6 +1,7 @@
 import {
   useConnectCoach,
   useDetachCoach,
+  useMe,
   useReports,
   useSubmitReport,
 } from "@/api/domain";
@@ -12,11 +13,13 @@ import {
   Text,
   TextField,
 } from "@/components/primitives";
+import { TrainingHeader } from "@/components/workout-layout";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 
 export default function Coach() {
   const [code, setCode] = useState("");
+  const me = useMe();
   const reports = useReports();
   const connect = useConnectCoach();
   const detach = useDetachCoach();
@@ -31,7 +34,8 @@ export default function Coach() {
   );
 
   return (
-    <Screen title="Coach">
+    <Screen>
+      <TrainingHeader title="Coach" name={me.data?.name ?? "Athlete"} />
       <Card>
         <Text variant="subtitle">Connection</Text>
         <Text tone="muted">
