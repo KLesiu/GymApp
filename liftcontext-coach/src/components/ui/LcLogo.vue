@@ -1,0 +1,1 @@
+<template><div class="flex items-center gap-3"><img src="/liftcontext-icon.svg" alt="" class="h-10 w-10"/><div><p class="font-display text-lg font-bold leading-tight">LiftContext Coach</p><p class="text-xs font-semibold text-textMuted">Coach panel</p></div></div></template>

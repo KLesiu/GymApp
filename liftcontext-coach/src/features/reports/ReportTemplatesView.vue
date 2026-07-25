@@ -1,0 +1,7 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+import { useReportTemplatesQuery } from '@/api/queries/domainQueries'
+import LcButton from '@/components/ui/LcButton.vue'; import LcCard from '@/components/ui/LcCard.vue'; import LcEmptyState from '@/components/ui/LcEmptyState.vue'; import LcErrorState from '@/components/ui/LcErrorState.vue'; import LcSkeleton from '@/components/ui/LcSkeleton.vue'
+const templates = useReportTemplatesQuery()
+</script>
+<template><section class="grid gap-6"><div class="flex items-end justify-between"><div><h1 class="font-display text-3xl font-bold">Report templates</h1><p class="mt-2 text-textMuted">Generic templates with frozen versions for assignments.</p></div><RouterLink to="/reports/templates/new"><LcButton>New template</LcButton></RouterLink></div><LcSkeleton v-if="templates.isLoading.value"/><LcErrorState v-else-if="templates.isError.value" @retry="templates.refetch()"/><LcEmptyState v-else-if="(templates.data.value ?? []).length === 0" title="No templates yet"/><div v-else class="grid gap-3 md:grid-cols-2"><RouterLink v-for="template in templates.data.value" :key="template.id" :to="`/reports/templates/${template.id}`"><LcCard><h2 class="font-display text-xl font-bold">{{ template.name }}</h2><p class="text-sm text-textMuted">{{ template.fields.length }} fields · version {{ template.version ?? 'current' }}</p></LcCard></RouterLink></div></section></template>

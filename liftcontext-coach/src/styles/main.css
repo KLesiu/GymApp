@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-canvas: #FAFAF7; --color-surface: #FFFFFF; --color-surface-muted: #F1F3F2; --color-ink: #1D2225; --color-text-muted: #667176; --color-border: #D9DEDC; --color-context: #15988F; --color-context-dark: #0F6F69; --color-reference: #FFC928; --color-success: #248A5B; --color-warning: #B77900; --color-danger: #D64343; --color-info: #2563EB;
+  color: var(--color-ink); background: var(--color-canvas); font-family: Inter, system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+:focus-visible { outline: 3px solid var(--color-reference); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }

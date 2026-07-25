@@ -1,0 +1,5 @@
+<script setup lang="ts">
+import { useRecurringRulesQuery, usePauseRule, useResumeRule } from '@/api/queries/domainQueries'; import LcButton from '@/components/ui/LcButton.vue'; import LcCard from '@/components/ui/LcCard.vue'; import LcEmptyState from '@/components/ui/LcEmptyState.vue'
+const rules = useRecurringRulesQuery(); const pause = usePauseRule(); const resume = useResumeRule()
+</script>
+<template><section class="grid gap-6"><h1 class="font-display text-3xl font-bold">Recurring report rules</h1><LcEmptyState v-if="(rules.data.value ?? []).length === 0" title="No recurring rules" description="Creation is supported by the API; detailed scheduling UI is intentionally conservative."/><LcCard v-for="rule in rules.data.value ?? []" :key="String((rule as Record<string, unknown>).id)"><pre class="overflow-auto text-sm">{{ rule }}</pre><div class="mt-3 flex gap-2"><LcButton variant="secondary" @click="pause.mutate(String((rule as Record<string, unknown>).id))">Pause</LcButton><LcButton variant="secondary" @click="resume.mutate(String((rule as Record<string, unknown>).id))">Resume</LcButton></div></LcCard></section></template>

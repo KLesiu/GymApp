@@ -1,0 +1,18 @@
+export const queryKeys = {
+  session: ['session'] as const,
+  dashboard: () => ['dashboard'] as const,
+  trainees: () => ['trainees'] as const,
+  trainee: (traineeId: string) => ['trainees', traineeId] as const,
+  traineeElo: (traineeId: string) => ['trainees', traineeId, 'elo'] as const,
+  traineeMeasurements: (traineeId: string) => ['trainees', traineeId, 'measurements'] as const,
+  traineeWorkouts: (traineeId: string) => ['trainees', traineeId, 'workouts'] as const,
+  traineeReports: (traineeId: string) => ['trainees', traineeId, 'reports'] as const,
+  plans: () => ['plans'] as const,
+  plan: (planId: string) => ['plans', planId] as const,
+  reportTemplates: () => ['reports', 'templates'] as const,
+  reportSubmissions: (traineeId?: string) => ['reports', 'submissions', traineeId ?? 'all'] as const,
+  recurringRules: (traineeId?: string) => ['reports', 'recurring-rules', traineeId ?? 'all'] as const,
+  exercises: () => ['exercises'] as const,
+  muscleGroups: () => ['muscle-groups'] as const,
+  ranking: () => ['ranking'] as const,
+}
