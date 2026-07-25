@@ -14,6 +14,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      initialRouteName="workout"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.contextDark,
@@ -25,12 +26,12 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="today"
-        options={options(t("today"), "sunny-outline")}
-      />
-      <Tabs.Screen
         name="workout"
         options={options(t("workout"), "barbell-outline")}
+      />
+      <Tabs.Screen
+        name="history"
+        options={options(t("history"), "time-outline")}
       />
       <Tabs.Screen
         name="progress"

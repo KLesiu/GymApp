@@ -12,8 +12,8 @@ export default function WorkoutSummary() {
         </Text>
       </Card>
       <Button
-        label="Back to today"
-        onPress={() => router.replace("/(app)/(tabs)/today")}
+        label="Back to history"
+        onPress={() => router.replace("/(app)/(tabs)/history")}
       />
     </Screen>
   );
