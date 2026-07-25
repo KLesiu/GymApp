@@ -63,9 +63,9 @@ const auth = [{ bearerAuth: [] }]
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
-    title: "LGYM Express API",
+    title: "LiftContext Express API",
     version: "0.1.0",
-    description: "Scoped LGYM Express + TypeScript + Prisma port",
+    description: "LiftContext Express + TypeScript + Prisma API",
   },
   servers: [{ url: "http://localhost:3000" }],
   components: {
