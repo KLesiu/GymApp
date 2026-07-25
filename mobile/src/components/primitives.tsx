@@ -28,17 +28,27 @@ export const Screen = ({
   children,
   scroll = true,
   title,
-}: { children: ReactNode; scroll?: boolean; title?: string }) => {
+  style,
+  backgroundColor,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  title?: string;
+  style?: object | undefined;
+  backgroundColor?: string;
+}) => {
   const body = (
-    <View style={styles.screenBody}>
+    <View style={[styles.screenBody, style]}>
       {title ? <Text variant="title">{title}</Text> : null}
       {children}
     </View>
   );
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, backgroundColor ? { backgroundColor } : undefined]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll}>{body}</ScrollView>
+        <ScrollView contentContainerStyle={styles.scroll} style={backgroundColor ? { backgroundColor } : undefined}>
+          {body}
+        </ScrollView>
       ) : (
         body
       )}
@@ -118,14 +128,16 @@ export const TextField = ({
   onChangeText,
   secureTextEntry,
   keyboardType,
+  style,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address" | "numeric";
+  style?: object | undefined;
 }) => (
-  <View style={styles.field}>
+  <View style={[styles.field, style]}>
     <Text variant="caption" tone="muted">
       {label}
     </Text>
@@ -250,29 +262,29 @@ export const BenchmarkCard = ({
     <Card style={styles.benchmarkCard}>
       <View style={styles.benchmarkHeader}>
         <View style={styles.referenceDot} />
-        <Text variant="label">Punkt odniesienia</Text>
+        <Text variant="label">Reference point</Text>
       </View>
       {hasReference ? (
         <>
           <Text variant="caption" tone="muted">
-            {gymName ?? "Ta siłownia"} · {previousDate ?? "poprzednia sesja"}
+            {gymName ?? "This gym"} · {previousDate ?? "previous session"}
           </Text>
           <Text variant="metricLarge">
             {weight} kg × {reps}
           </Text>
           <Text variant="caption" tone="muted">
-            Seria {series ?? 1}
+            Series {series ?? 1}
           </Text>
           {onUseValue ? (
             <Button
-              label="Użyj wartości"
+              label="Use value"
               variant="secondary"
               onPress={onUseValue}
             />
           ) : null}
         </>
       ) : (
-        <Text tone="muted">Nie masz jeszcze wyniku dla tej siłowni.</Text>
+        <Text tone="muted">You do not have a result for this gym yet.</Text>
       )}
     </Card>
   );
