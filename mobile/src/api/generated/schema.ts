@@ -664,6 +664,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/active/{planId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deactivate active plan */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    planId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{planId}": {
         parameters: {
             query?: never;
@@ -933,7 +969,31 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update plan day */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    planDayId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanDayRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/api/v1/workouts": {
@@ -1492,6 +1552,40 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trainee/trainer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current trainer */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2281,14 +2375,13 @@ export interface components {
             name: string;
             /** @example Simple training plan */
             description?: string;
-            days: components["schemas"]["PlanDayRequest"][];
+            days?: components["schemas"]["PlanDayRequest"][];
         };
         UpdatePlanRequest: {
             /** @example Updated plan */
             name?: string;
             /** @example Updated description */
             description?: string;
-            days?: components["schemas"]["PlanDayRequest"][];
         };
         SetActivePlanRequest: {
             /** Format: uuid */
@@ -2304,9 +2397,9 @@ export interface components {
             /** @example 1 */
             series: number;
             /** @example 10 */
-            reps: number;
+            reps: number | null;
             /** @example 80 */
-            weight: number;
+            weight: number | null;
             /** @enum {string} */
             unit: "KILOGRAMS" | "POUNDS";
         };

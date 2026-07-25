@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/state/auth-store";
-import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
+import { type AxiosError, type AxiosRequestConfig, create } from "axios";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
@@ -23,7 +23,7 @@ export const resolveApiUrl = () => {
     ? raw.replace("localhost", "10.0.2.2")
     : raw;
 };
-export const api = axios.create({
+export const api = create({
   baseURL: resolveApiUrl(),
   timeout: 15000,
   headers: { "Content-Type": "application/json" },

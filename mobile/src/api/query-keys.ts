@@ -13,4 +13,5 @@ export const keys = {
   measurementTrends: (bodyPart?: string) =>
     ["measurements", "trends", bodyPart] as const,
   reports: ["reports", "assignments"] as const,
+  currentCoach: ["coach", "current"] as const,
 };

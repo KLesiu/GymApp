@@ -1,6 +1,6 @@
-import axios from "axios";
+import { create } from "axios";
 
-const api = axios.create({
+const api = create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000",
   timeout: 15000,
 });

@@ -61,19 +61,28 @@ export type PlanExercise = {
   repsTarget: number;
   orderIndex: number;
 };
+export type PlanDay = {
+  _id: string;
+  name: string;
+  orderIndex?: number;
+  exercises: PlanExercise[];
+};
 export type Plan = {
   _id: string;
   name: string;
   description?: string | null;
-  days: Array<{
-    _id: string;
-    name: string;
-    orderIndex?: number;
-    exercises: PlanExercise[];
-  }>;
+  days: PlanDay[];
   assignedByTrainer?: boolean;
 };
 export type WorkoutSet = {
+  exerciseId: string;
+  series: number;
+  reps?: number | null;
+  weight?: number | null;
+  unit: "KILOGRAMS" | "POUNDS";
+};
+type CompletedWorkoutSet = {
+  id?: string;
   exerciseId: string;
   series: number;
   reps: number;
@@ -98,8 +107,8 @@ export type WorkoutExerciseSet = {
   exerciseId: string;
   exerciseName: string;
   series: number;
-  reps: number;
-  weight: number;
+  reps: number | null;
+  weight: number | null;
   unit: "KILOGRAMS" | "POUNDS";
 };
 export type WorkoutDetail = Workout & {
@@ -131,12 +140,24 @@ export type ReportAssignment = {
   note?: string;
   dueAt?: string;
 };
+export type CurrentCoach = {
+  _id: string;
+  status: "ACTIVE";
+  activatedAt?: string | null;
+  trainer: User;
+};
 
 export const useMe = () =>
   useQuery({
     queryKey: keys.me,
     queryFn: ({ signal }) => request<User>({ url: "/api/v1/auth/me" }, signal),
     retry: false,
+  });
+export const useCurrentCoach = () =>
+  useQuery({
+    queryKey: keys.currentCoach,
+    queryFn: ({ signal }) =>
+      request<CurrentCoach | null>({ url: "/api/v1/trainee/trainer" }, signal),
   });
 export const useGyms = () =>
   useQuery({
@@ -192,7 +213,7 @@ export const useEloChart = () =>
   useQuery({
     queryKey: keys.eloChart,
     queryFn: ({ signal }) =>
-      request<Array<{ createdAt: string; newElo: number }>>(
+      request<{ createdAt: string; newElo: number }[]>(
         { url: "/api/v1/elo/chart" },
         signal,
       ),
@@ -233,6 +254,37 @@ export const useCreateGym = () => {
     onSuccess: () => void qc.invalidateQueries({ queryKey: keys.gyms }),
   });
 };
+export const useUpdateGym = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      gymId,
+      body,
+    }: { gymId: string; body: Pick<Gym, "name" | "address"> }) =>
+      request<Gym>({
+        url: `/api/v1/gyms/${gymId}`,
+        method: "PATCH",
+        data: body,
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.gyms }),
+  });
+};
+export const useDeleteGym = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (gymId: string) =>
+      request<{ msg: string }>({
+        url: `/api/v1/gyms/${gymId}`,
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.gyms }),
+        qc.invalidateQueries({ queryKey: keys.workouts }),
+      ]);
+    },
+  });
+};
 export const useUpsertExercise = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -255,18 +307,98 @@ export const useUpsertExercise = () => {
     },
   });
 };
+export const useUpdateExercise = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      exerciseId,
+      body,
+    }: {
+      exerciseId: string;
+      body: {
+        name?: string;
+        bodyPart?: ExerciseBodyPart;
+        muscleGroupId?: string;
+        formula?: string;
+      };
+    }) =>
+      request<Exercise>({
+        url: `/api/v1/exercises/${exerciseId}`,
+        method: "PATCH",
+        data: body,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.exercises }),
+        qc.invalidateQueries({ queryKey: keys.muscleGroups }),
+      ]);
+    },
+  });
+};
+export const useDeleteExercise = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (exerciseId: string) =>
+      request<{ msg: string }>({
+        url: `/api/v1/exercises/${exerciseId}`,
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.exercises }),
+        qc.invalidateQueries({ queryKey: keys.muscleGroups }),
+      ]);
+    },
+  });
+};
 export const useCreatePlan = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: {
       name: string;
       description?: string;
-      days: {
+      days?: {
         name: string;
         orderIndex: number;
         exercises: PlanExercise[];
       }[];
     }) => request<Plan>({ url: "/api/v1/plans", method: "POST", data: body }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+export const useUpdatePlan = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      planId,
+      body,
+    }: { planId: string; body: { name?: string; description?: string } }) =>
+      request<Plan>({
+        url: `/api/v1/plans/${planId}`,
+        method: "PATCH",
+        data: body,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+export const useDeletePlan = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) =>
+      request<{ msg: string }>({
+        url: `/api/v1/plans/${planId}`,
+        method: "DELETE",
+      }),
     onSuccess: async () => {
       await Promise.all([
         qc.invalidateQueries({ queryKey: keys.plans }),
@@ -283,6 +415,80 @@ export const useActivatePlan = () => {
         url: "/api/v1/plans/active",
         method: "POST",
         data: { planId },
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+export const useDeactivatePlan = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) =>
+      request<{ msg: string }>({
+        url: `/api/v1/plans/active/${planId}`,
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+type PlanDayBody = {
+  name: string;
+  orderIndex: number;
+  exercises: PlanExercise[];
+};
+export const useCreatePlanDay = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ planId, body }: { planId: string; body: PlanDayBody }) =>
+      request<PlanDay>({
+        url: `/api/v1/plans/${planId}/days`,
+        method: "POST",
+        data: body,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+export const useUpdatePlanDay = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      planDayId,
+      body,
+    }: { planDayId: string; body: PlanDayBody }) =>
+      request<PlanDay>({
+        url: `/api/v1/plan-days/${planDayId}`,
+        method: "PATCH",
+        data: body,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.plans }),
+        qc.invalidateQueries({ queryKey: keys.activePlan }),
+      ]);
+    },
+  });
+};
+export const useDeletePlanDay = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planDayId: string) =>
+      request<{ msg: string }>({
+        url: `/api/v1/plan-days/${planDayId}`,
+        method: "DELETE",
       }),
     onSuccess: async () => {
       await Promise.all([
@@ -314,14 +520,7 @@ export const useUpdateWorkoutSets = () => {
       sets,
     }: {
       workoutId: string;
-      sets: {
-        id?: string;
-        exerciseId: string;
-        series: number;
-        reps: number;
-        weight: number;
-        unit: "KILOGRAMS" | "POUNDS";
-      }[];
+      sets: CompletedWorkoutSet[];
     }) =>
       request<WorkoutDetail>({
         url: `/api/v1/workouts/${workoutId}/sets`,
@@ -343,7 +542,11 @@ export const useFinalizeWorkout = () => {
       workoutId,
       operationId,
       sets,
-    }: { workoutId: string; operationId: string; sets: WorkoutSet[] }) =>
+    }: {
+      workoutId: string;
+      operationId: string;
+      sets: CompletedWorkoutSet[];
+    }) =>
       request<{ gainElo?: number; comparison?: unknown[] }>({
         url: `/api/v1/workouts/${workoutId}/finalize`,
         method: "POST",
@@ -407,6 +610,7 @@ export const useConnectCoach = () => {
       }),
     onSuccess: async () => {
       await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.currentCoach }),
         qc.invalidateQueries({ queryKey: keys.reports }),
         qc.invalidateQueries({ queryKey: keys.me }),
       ]);
@@ -420,6 +624,7 @@ export const useDetachCoach = () => {
       request({ url: "/api/v1/trainee/trainer/detach", method: "POST" }),
     onSuccess: async () => {
       await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.currentCoach }),
         qc.invalidateQueries({ queryKey: keys.reports }),
         qc.invalidateQueries({ queryKey: keys.me }),
       ]);
