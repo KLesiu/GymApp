@@ -21,3 +21,15 @@ mobile/expo-env.d.ts
 express-api/node_modules/
 express-api/dist/
 express-api/.env
+
+# Coach app local artifacts
+liftcontext-coach/node_modules/
+liftcontext-coach/dist/
+liftcontext-coach/coverage/
+liftcontext-coach/playwright-report/
+liftcontext-coach/test-results/
+liftcontext-coach/.vite/
+liftcontext-coach/*.tsbuildinfo
+liftcontext-coach/.env
+liftcontext-coach/.env.local
+liftcontext-coach/.env.*.local
