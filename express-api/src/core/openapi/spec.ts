@@ -22,8 +22,8 @@ const headerParam = (name: string, required = true) => ({
   schema: { type: "string" },
 })
 
-const jsonBody = (schema: Record<string, unknown>) => ({
-  required: true,
+const jsonBody = (schema: Record<string, unknown>, required = true) => ({
+  required,
   content: {
     "application/json": {
       schema,
@@ -32,6 +32,21 @@ const jsonBody = (schema: Record<string, unknown>) => ({
 })
 
 const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` })
+
+const exerciseBodyPartEnum = [
+  "CHEST",
+  "BACK",
+  "SHOULDERS",
+  "BICEPS",
+  "TRICEPS",
+  "QUADS",
+  "HAMSTRINGS",
+  "GLUTES",
+  "CORE",
+  "CALVES",
+] as const
+
+const bodyPartEnum = ["WEIGHT", "BODY_FAT", ...exerciseBodyPartEnum, "WAIST", "HIPS", "THIGH", "ARM"] as const
 
 const ok = { description: "OK" } as const
 const created = { description: "Created" } as const
@@ -108,9 +123,10 @@ export const openApiSpec = {
       },
       ExerciseRequest: {
         type: "object",
-        required: ["name", "muscleGroupId"],
+        required: ["name", "bodyPart"],
         properties: {
           name: { type: "string", example: "Bench press" },
+          bodyPart: { type: "string", enum: exerciseBodyPartEnum },
           muscleGroupId: uuidSchema,
           formula: {
             type: "string",
@@ -124,6 +140,7 @@ export const openApiSpec = {
         minProperties: 1,
         properties: {
           name: { type: "string", example: "Bench press" },
+          bodyPart: { type: "string", enum: exerciseBodyPartEnum },
           muscleGroupId: uuidSchema,
           formula: {
             type: "string",
@@ -210,13 +227,56 @@ export const openApiSpec = {
           sets: { type: "array", minItems: 1, items: schemaRef("WorkoutSetRequest") },
         },
       },
+      UpdateWorkoutSetsRequest: {
+        type: "object",
+        required: ["sets"],
+        properties: {
+          sets: {
+            type: "array",
+            minItems: 1,
+            items: {
+              type: "object",
+              required: ["exerciseId", "series", "reps", "weight", "unit"],
+              properties: {
+                id: uuidSchema,
+                exerciseId: uuidSchema,
+                series: { type: "integer", minimum: 1, example: 1 },
+                reps: { type: "integer", minimum: 1, example: 10 },
+                weight: { type: "number", minimum: 0, example: 80 },
+                unit: { type: "string", enum: ["KILOGRAMS", "POUNDS"] },
+              },
+            },
+          },
+        },
+      },
+      FinalizeWorkoutRequest: {
+        type: "object",
+        properties: {
+          sets: {
+            type: "array",
+            minItems: 1,
+            items: {
+              type: "object",
+              required: ["exerciseId", "series", "reps", "weight", "unit"],
+              properties: {
+                id: uuidSchema,
+                exerciseId: uuidSchema,
+                series: { type: "integer", minimum: 1, example: 1 },
+                reps: { type: "integer", minimum: 1, example: 10 },
+                weight: { type: "number", minimum: 0, example: 80 },
+                unit: { type: "string", enum: ["KILOGRAMS", "POUNDS"] },
+              },
+            },
+          },
+        },
+      },
       MeasurementRequest: {
         type: "object",
         required: ["bodyPart", "unit", "value", "takenAt"],
         properties: {
           bodyPart: {
             type: "string",
-            enum: ["WEIGHT", "BODY_FAT", "CHEST", "WAIST", "HIPS", "THIGH", "ARM"],
+            enum: bodyPartEnum,
           },
           unit: { type: "string", enum: ["KG", "CM", "PERCENT"] },
           value: { type: "number", minimum: 0, exclusiveMinimum: true, example: 82.5 },
@@ -530,6 +590,16 @@ export const openApiSpec = {
         summary: "Finalize workout",
         security: auth,
         parameters: [pathParam("workoutId"), headerParam("Idempotency-Key")],
+        requestBody: jsonBody(schemaRef("FinalizeWorkoutRequest"), false),
+        responses: { "200": ok },
+      },
+    },
+    "/api/v1/workouts/{workoutId}/sets": {
+      patch: {
+        summary: "Update draft workout sets",
+        security: auth,
+        parameters: [pathParam("workoutId")],
+        requestBody: jsonBody(schemaRef("UpdateWorkoutSetsRequest")),
         responses: { "200": ok },
       },
     },

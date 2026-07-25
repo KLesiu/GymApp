@@ -1083,7 +1083,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["FinalizeWorkoutRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1098,6 +1102,46 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workouts/{workoutId}/sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update draft workout sets */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workoutId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateWorkoutSetsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/api/v1/measurements": {
@@ -2185,8 +2229,10 @@ export interface components {
         ExerciseRequest: {
             /** @example Bench press */
             name: string;
+            /** @enum {string} */
+            bodyPart: "CHEST" | "BACK" | "SHOULDERS" | "BICEPS" | "TRICEPS" | "QUADS" | "HAMSTRINGS" | "GLUTES" | "CORE" | "CALVES";
             /** Format: uuid */
-            muscleGroupId: string;
+            muscleGroupId?: string;
             /**
              * @default STANDARD
              * @enum {string}
@@ -2196,6 +2242,8 @@ export interface components {
         UpdateExerciseRequest: {
             /** @example Bench press */
             name?: string;
+            /** @enum {string} */
+            bodyPart?: "CHEST" | "BACK" | "SHOULDERS" | "BICEPS" | "TRICEPS" | "QUADS" | "HAMSTRINGS" | "GLUTES" | "CORE" | "CALVES";
             /** Format: uuid */
             muscleGroupId?: string;
             /** @enum {string} */
@@ -2276,9 +2324,41 @@ export interface components {
             startedAt: string;
             sets: components["schemas"]["WorkoutSetRequest"][];
         };
+        UpdateWorkoutSetsRequest: {
+            sets: {
+                /** Format: uuid */
+                id?: string;
+                /** Format: uuid */
+                exerciseId: string;
+                /** @example 1 */
+                series: number;
+                /** @example 10 */
+                reps: number;
+                /** @example 80 */
+                weight: number;
+                /** @enum {string} */
+                unit: "KILOGRAMS" | "POUNDS";
+            }[];
+        };
+        FinalizeWorkoutRequest: {
+            sets?: {
+                /** Format: uuid */
+                id?: string;
+                /** Format: uuid */
+                exerciseId: string;
+                /** @example 1 */
+                series: number;
+                /** @example 10 */
+                reps: number;
+                /** @example 80 */
+                weight: number;
+                /** @enum {string} */
+                unit: "KILOGRAMS" | "POUNDS";
+            }[];
+        };
         MeasurementRequest: {
             /** @enum {string} */
-            bodyPart: "WEIGHT" | "BODY_FAT" | "CHEST" | "WAIST" | "HIPS" | "THIGH" | "ARM";
+            bodyPart: "WEIGHT" | "BODY_FAT" | "CHEST" | "BACK" | "SHOULDERS" | "BICEPS" | "TRICEPS" | "QUADS" | "HAMSTRINGS" | "GLUTES" | "CORE" | "CALVES" | "WAIST" | "HIPS" | "THIGH" | "ARM";
             /** @enum {string} */
             unit: "KG" | "CM" | "PERCENT";
             /** @example 82.5 */

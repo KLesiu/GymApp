@@ -121,12 +121,27 @@
         "type": "object",
         "required": [
           "name",
-          "muscleGroupId"
+          "bodyPart"
         ],
         "properties": {
           "name": {
             "type": "string",
             "example": "Bench press"
+          },
+          "bodyPart": {
+            "type": "string",
+            "enum": [
+              "CHEST",
+              "BACK",
+              "SHOULDERS",
+              "BICEPS",
+              "TRICEPS",
+              "QUADS",
+              "HAMSTRINGS",
+              "GLUTES",
+              "CORE",
+              "CALVES"
+            ]
           },
           "muscleGroupId": {
             "type": "string",
@@ -151,6 +166,21 @@
           "name": {
             "type": "string",
             "example": "Bench press"
+          },
+          "bodyPart": {
+            "type": "string",
+            "enum": [
+              "CHEST",
+              "BACK",
+              "SHOULDERS",
+              "BICEPS",
+              "TRICEPS",
+              "QUADS",
+              "HAMSTRINGS",
+              "GLUTES",
+              "CORE",
+              "CALVES"
+            ]
           },
           "muscleGroupId": {
             "type": "string",
@@ -390,6 +420,111 @@
           }
         }
       },
+      "UpdateWorkoutSetsRequest": {
+        "type": "object",
+        "required": [
+          "sets"
+        ],
+        "properties": {
+          "sets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "exerciseId",
+                "series",
+                "reps",
+                "weight",
+                "unit"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "exerciseId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "series": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 1
+                },
+                "reps": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 10
+                },
+                "weight": {
+                  "type": "number",
+                  "minimum": 0,
+                  "example": 80
+                },
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "KILOGRAMS",
+                    "POUNDS"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "FinalizeWorkoutRequest": {
+        "type": "object",
+        "properties": {
+          "sets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "exerciseId",
+                "series",
+                "reps",
+                "weight",
+                "unit"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "exerciseId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "series": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 1
+                },
+                "reps": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 10
+                },
+                "weight": {
+                  "type": "number",
+                  "minimum": 0,
+                  "example": 80
+                },
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "KILOGRAMS",
+                    "POUNDS"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
       "MeasurementRequest": {
         "type": "object",
         "required": [
@@ -405,6 +540,15 @@
               "WEIGHT",
               "BODY_FAT",
               "CHEST",
+              "BACK",
+              "SHOULDERS",
+              "BICEPS",
+              "TRICEPS",
+              "QUADS",
+              "HAMSTRINGS",
+              "GLUTES",
+              "CORE",
+              "CALVES",
               "WAIST",
               "HIPS",
               "THIGH",
@@ -1497,6 +1641,52 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinalizeWorkoutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workouts/{workoutId}/sets": {
+      "patch": {
+        "summary": "Update draft workout sets",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkoutSetsRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
