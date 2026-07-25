@@ -14,6 +14,31 @@ const asRecord = (value: unknown): Record<string, unknown> => value && typeof va
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 const str = (value: unknown, fallback = '') => typeof value === 'string' ? value : fallback
 const num = (value: unknown): number | undefined => typeof value === 'number' ? value : undefined
+const toUserRole = (value: unknown): UserRole | undefined => {
+  if (value === 'TRAINER' || value === 'TRAINEE' || value === 'ADMIN') return value
+  return undefined
+}
+
+const roleFromClaims = (claims: unknown[]): UserRole | undefined => {
+  for (const claim of claims) {
+    if (typeof claim !== 'string') continue
+    const role = toUserRole(claim.replace(/^role:/, ''))
+    if (role) return role
+  }
+  return undefined
+}
+
+const roleFromUser = (user: Record<string, unknown>): UserRole => {
+  const directRole = toUserRole(user.role)
+  if (directRole) return directRole
+
+  for (const role of asArray(user.roles)) {
+    const parsedRole = toUserRole(role)
+    if (parsedRole) return parsedRole
+  }
+
+  return roleFromClaims(asArray(user.permissionClaims)) ?? 'TRAINEE'
+}
 
 export const unwrapList = (value: unknown, preferred: readonly string[] = []): unknown[] => {
   if (Array.isArray(value)) return value
@@ -26,7 +51,7 @@ export const unwrapList = (value: unknown, preferred: readonly string[] = []): u
 export const toSessionUser = (value: unknown): SessionUser => {
   const r = asRecord(value)
   const user = asRecord(r.user ?? value)
-  return { id: str(user.id), name: str(user.name, 'Coach'), email: str(user.email) || undefined, role: str(user.role, 'TRAINEE') as UserRole, elo: num(user.elo) }
+  return { id: str(user.id ?? user._id), name: str(user.name, 'Coach'), email: str(user.email) || undefined, role: roleFromUser(user), elo: num(user.elo) }
 }
 
 export const toToken = (value: unknown): string => {
