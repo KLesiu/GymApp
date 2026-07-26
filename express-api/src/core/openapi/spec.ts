@@ -33,6 +33,15 @@ const jsonBody = (schema: Record<string, unknown>, required = true) => ({
 
 const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 
+const jsonResponse = (description: string, schema: Record<string, unknown>) => ({
+  description,
+  content: {
+    "application/json": {
+      schema,
+    },
+  },
+})
+
 const exerciseBodyPartEnum = [
   "CHEST",
   "BACK",
@@ -127,6 +136,16 @@ export const openApiSpec = {
           },
         },
       },
+      MuscleGroupResponse: {
+        type: "object",
+        required: ["_id", "name", "region", "isGlobal"],
+        properties: {
+          _id: uuidSchema,
+          name: { type: "string", example: "Chest" },
+          region: { type: "string" },
+          isGlobal: { type: "boolean", example: false },
+        },
+      },
       ExerciseRequest: {
         type: "object",
         required: ["name", "bodyPart"],
@@ -139,6 +158,18 @@ export const openApiSpec = {
             enum: ["STANDARD", "STRENGTH", "VOLUME", "PULLUP_INVERSE"],
             default: "STANDARD",
           },
+        },
+      },
+      ExerciseResponse: {
+        type: "object",
+        required: ["_id", "name", "bodyPart", "formula", "isGlobal", "muscleGroup"],
+        properties: {
+          _id: uuidSchema,
+          name: { type: "string", example: "Bench press" },
+          bodyPart: { type: "string", enum: exerciseBodyPartEnum },
+          formula: { type: "string", enum: ["STANDARD", "STRENGTH", "VOLUME", "PULLUP_INVERSE"] },
+          isGlobal: { type: "boolean", example: false },
+          muscleGroup: schemaRef("MuscleGroupResponse"),
         },
       },
       UpdateExerciseRequest: {
@@ -293,9 +324,24 @@ export const openApiSpec = {
       },
       RelationshipRequest: {
         type: "object",
-        required: ["traineeCode"],
+        required: ["traineeEmail"],
         properties: {
-          traineeCode: { type: "string", minLength: 8, maxLength: 12, example: "80A48224E947" },
+          traineeEmail: { type: "string", format: "email", example: "trainee@example.com" },
+        },
+      },
+      TrainerInvitationResponse: {
+        type: "object",
+        required: ["id", "_id", "traineeId", "traineeName", "traineeEmail", "status", "createdAt"],
+        properties: {
+          id: uuidSchema,
+          _id: uuidSchema,
+          traineeId: uuidSchema,
+          traineeName: { type: "string", example: "seed-trainee" },
+          traineeEmail: { type: "string", format: "email", example: "trainee@example.com" },
+          status: { type: "string", enum: ["PENDING", "ACTIVE", "REJECTED", "DETACHED"] },
+          createdAt: dateTimeSchema,
+          activatedAt: { ...dateTimeSchema, nullable: true },
+          detachedAt: { ...dateTimeSchema, nullable: true },
         },
       },
       ReportFieldRequest: {
@@ -492,7 +538,16 @@ export const openApiSpec = {
       },
     },
     "/api/v1/muscle-groups": {
-      get: { summary: "List muscle groups", security: auth, responses: { "200": ok } },
+      get: {
+        summary: "List muscle groups",
+        security: auth,
+        responses: {
+          "200": jsonResponse("Muscle groups", {
+            type: "array",
+            items: schemaRef("MuscleGroupResponse"),
+          }),
+        },
+      },
       post: {
         summary: "Create muscle group",
         security: auth,
@@ -501,7 +556,13 @@ export const openApiSpec = {
       },
     },
     "/api/v1/exercises": {
-      get: { summary: "List exercises", security: auth, responses: { "200": ok } },
+      get: {
+        summary: "List exercises",
+        security: auth,
+        responses: {
+          "200": jsonResponse("Exercises", { type: "array", items: schemaRef("ExerciseResponse") }),
+        },
+      },
       post: {
         summary: "Create exercise",
         security: auth,
@@ -514,7 +575,7 @@ export const openApiSpec = {
         summary: "Get contextual last exercise scores",
         security: auth,
         requestBody: jsonBody(schemaRef("LastScoresRequest")),
-        responses: { "200": ok },
+        responses: { "200": jsonResponse("Exercise", schemaRef("ExerciseResponse")) },
       },
     },
     "/api/v1/exercises/{exerciseId}": {
@@ -522,7 +583,12 @@ export const openApiSpec = {
         summary: "Get exercise",
         security: auth,
         parameters: [pathParam("exerciseId")],
-        responses: { "200": ok },
+        responses: {
+          "200": jsonResponse("Trainer invitations", {
+            type: "array",
+            items: schemaRef("TrainerInvitationResponse"),
+          }),
+        },
       },
       patch: {
         summary: "Update exercise",
@@ -748,6 +814,11 @@ export const openApiSpec = {
       },
     },
     "/api/v1/trainer/relationships": {
+      get: {
+        summary: "List trainer invitations",
+        security: auth,
+        responses: { "200": ok },
+      },
       post: {
         summary: "Create trainer-trainee relationship",
         security: auth,
