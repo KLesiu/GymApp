@@ -80,12 +80,14 @@ export class PlanRepository {
     return this.prisma.plan.updateMany({ where: { id: planId, ownerId }, data: input })
   }
 
-  async countOwnedExercises(ownerId: string, exerciseIds: readonly string[]) {
+  async countAvailableExercises(ownerId: string, exerciseIds: readonly string[]) {
     if (exerciseIds.length === 0) {
       return 0
     }
 
-    return this.prisma.exercise.count({ where: { id: { in: [...exerciseIds] }, ownerId } })
+    return this.prisma.exercise.count({
+      where: { id: { in: [...exerciseIds] }, OR: [{ ownerId }, { isGlobal: true }] },
+    })
   }
 
   async deletePlan(ownerId: string, planId: string) {

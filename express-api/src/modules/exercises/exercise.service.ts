@@ -13,7 +13,12 @@ export class ExerciseService {
 
   async listMuscleGroups(userId: string) {
     const items = await this.repository.listMuscleGroups(userId)
-    return items.map((item) => ({ _id: item.id, name: item.name, region: item.region }))
+    return items.map((item) => ({
+      _id: item.id,
+      name: item.name,
+      region: item.region,
+      isGlobal: item.isGlobal,
+    }))
   }
 
   async createExercise(
@@ -46,10 +51,12 @@ export class ExerciseService {
       name: item.name,
       bodyPart: item.bodyPart,
       formula: item.formula,
+      isGlobal: item.isGlobal,
       muscleGroup: {
         _id: item.muscleGroup.id,
         name: item.muscleGroup.name,
         region: item.muscleGroup.region,
+        isGlobal: item.muscleGroup.isGlobal,
       },
     }))
   }
@@ -65,10 +72,12 @@ export class ExerciseService {
       name: exercise.name,
       bodyPart: exercise.bodyPart,
       formula: exercise.formula,
+      isGlobal: exercise.isGlobal,
       muscleGroup: {
         _id: exercise.muscleGroup.id,
         name: exercise.muscleGroup.name,
         region: exercise.muscleGroup.region,
+        isGlobal: exercise.muscleGroup.isGlobal,
       },
     }
   }

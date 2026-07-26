@@ -27,7 +27,10 @@ export class ExerciseRepository {
   }
 
   async listMuscleGroups(ownerId: string) {
-    return this.prisma.muscleGroup.findMany({ where: { ownerId }, orderBy: { name: "asc" } })
+    return this.prisma.muscleGroup.findMany({
+      where: { OR: [{ ownerId }, { isGlobal: true }] },
+      orderBy: [{ isGlobal: "desc" }, { name: "asc" }],
+    })
   }
 
   async createExercise(
@@ -47,15 +50,15 @@ export class ExerciseRepository {
 
   async listExercises(ownerId: string) {
     return this.prisma.exercise.findMany({
-      where: { ownerId },
+      where: { OR: [{ ownerId }, { isGlobal: true }] },
       include: { muscleGroup: true },
-      orderBy: { name: "asc" },
+      orderBy: [{ isGlobal: "desc" }, { name: "asc" }],
     })
   }
 
   async findExercise(ownerId: string, exerciseId: string) {
     return this.prisma.exercise.findFirst({
-      where: { id: exerciseId, ownerId },
+      where: { id: exerciseId, OR: [{ ownerId }, { isGlobal: true }] },
       include: { muscleGroup: true },
     })
   }

@@ -209,8 +209,8 @@ export class PlanService {
     const exerciseIds = Array.from(
       new Set(days.flatMap((day) => day.exercises.map((exercise) => exercise.exerciseId))),
     )
-    const ownedCount = await this.repository.countOwnedExercises(userId, exerciseIds)
-    if (ownedCount !== exerciseIds.length) {
+    const availableCount = await this.repository.countAvailableExercises(userId, exerciseIds)
+    if (availableCount !== exerciseIds.length) {
       throw new ValidationAppError("EXERCISE_NOT_FOUND")
     }
   }
