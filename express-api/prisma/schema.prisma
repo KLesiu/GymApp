@@ -155,6 +155,7 @@ model MuscleGroup {
   ownerId   String       @db.Uuid
   name      String
   region    MuscleRegion
+  isGlobal  Boolean      @default(false)
   createdAt DateTime     @default(now())
   owner     User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   exercises Exercise[]
@@ -169,6 +170,7 @@ model Exercise {
   name          String
   bodyPart      BodyPart
   formula       ExerciseEloFormula  @default(STANDARD)
+  isGlobal      Boolean             @default(false)
   createdAt     DateTime            @default(now())
   owner         User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   muscleGroup   MuscleGroup         @relation(fields: [muscleGroupId], references: [id], onDelete: Restrict)

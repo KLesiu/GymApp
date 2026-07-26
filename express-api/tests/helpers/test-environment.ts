@@ -2,7 +2,10 @@ import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
 import type { PrismaClient } from "@prisma/client"
+import argon2 from "argon2"
 import request from "supertest"
+
+import { seedGlobalStarterExercises } from "../../prisma/seed"
 
 const execFileAsync = promisify(execFile)
 const POSTGRES_IMAGE = "postgres:16"
@@ -92,6 +95,8 @@ export class TestEnvironment {
         "User"
       RESTART IDENTITY CASCADE;
     `)
+
+    await seedGlobalStarterExercises(this.prisma, await argon2.hash("password123"))
   }
 
   private async startPostgresContainer() {
