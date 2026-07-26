@@ -15,6 +15,16 @@ const asRecord = (value: unknown): Record<string, unknown> => value && typeof va
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 const str = (value: unknown, fallback = '') => typeof value === 'string' ? value : fallback
 const num = (value: unknown): number | undefined => typeof value === 'number' ? value : undefined
+const dateTimeFormatter = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' })
+const formatDateTime = (value: unknown): string => {
+  const raw = str(value)
+  if (!raw) return ''
+
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return raw
+
+  return dateTimeFormatter.format(date)
+}
 const toUserRole = (value: unknown): UserRole | undefined => {
   if (value === 'TRAINER' || value === 'TRAINEE') return value
   return undefined
@@ -65,9 +75,12 @@ export const toTrainee = (value: unknown): TraineeSummary => {
 }
 
 export const toWorkout = (value: unknown): WorkoutSummary => {
-  const r = asRecord(value); const gym = asRecord(r.gym)
-  const sets = asArray(r.sets)
-  return { id: str(r.id), status: str(r.status), date: str(r.finalizedAt ?? r.startedAt ?? r.createdAt), gymName: str(r.gymName ?? gym.name) || undefined, title: str(r.planDayName ?? r.name ?? 'Workout'), summary: `${sets.length} sets`, raw: r }
+  const r = asRecord(value); const gym = asRecord(r.gym); const planDay = asRecord(r.planDay)
+  const sets = asArray(r.sets).length > 0 ? asArray(r.sets) : asArray(r.exercises)
+  const status = str(r.status, r.completedAt ? 'FINALIZED' : 'DRAFT')
+  const date = formatDateTime(r.completedAt ?? r.finalizedAt ?? r.startedAt ?? r.createdAt)
+  const setLabel = sets.length === 1 ? 'set' : 'sets'
+  return { id: str(r.id ?? r._id), status, date, gymName: str(r.gymName ?? gym.name ?? r.gym) || undefined, title: str(r.planDayName ?? planDay.name ?? r.name ?? 'Workout'), summary: `${sets.length} ${setLabel}`, raw: r }
 }
 
 export const toMeasurement = (value: unknown): MeasurementPoint => {
@@ -79,4 +92,4 @@ export const toPlan = (value: unknown): PlanSummary => { const r = asRecord(valu
 export const toReportTemplate = (value: unknown): ReportTemplate => { const r = asRecord(value); return { id: str(r.id), name: str(r.name, 'Template'), description: str(r.description) || undefined, fields: unwrapList(r.fields).map(toReportField), version: num(r.version) } }
 export const toReportField = (value: unknown): ReportField => { const r = asRecord(value); return { key: str(r.key), label: str(r.label), type: str(r.type, 'TEXT') as ReportField['type'], isRequired: Boolean(r.isRequired), order: num(r.order) ?? 0, moduleConfig: asRecord(r.moduleConfig) } }
 export const toSubmission = (value: unknown): ReportSubmission => { const r = asRecord(value); const templateVersion = asRecord(r.templateVersion); const snapshot = asRecord(templateVersion.snapshot); return { id: str(r.id), traineeId: str(r.traineeId) || undefined, traineeName: str(r.traineeName) || undefined, templateName: str(r.templateName ?? asRecord(r.template).name), templateVersion: num(templateVersion.version), frozenFields: unwrapList(snapshot.fields).map(toReportField).sort((left, right) => left.order - right.order), submittedAt: str(r.submittedAt ?? r.createdAt) || undefined, answers: asRecord(r.answers ?? r.payloadJson), feedback: r.feedback } }
-export const toChartPoints = (value: unknown): ChartPoint[] => unwrapList(value, ['points', 'history', 'elo']).map((item) => { const r = asRecord(item); return { label: str(r.date ?? r.createdAt ?? r.takenAt), value: num(r.value ?? r.elo) ?? 0, hint: str(r.reason ?? r.exerciseName) || undefined } })
+export const toChartPoints = (value: unknown): ChartPoint[] => unwrapList(value, ['points', 'history', 'elo']).map((item) => { const r = asRecord(item); return { label: formatDateTime(r.date ?? r.createdAt ?? r.takenAt), value: num(r.value ?? r.elo) ?? 0, hint: str(r.reason ?? r.exerciseName) || undefined } })

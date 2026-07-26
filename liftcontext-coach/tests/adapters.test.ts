@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toSessionUser, toTrainee, toWorkout, unwrapList } from '@/api/adapters/viewModels'
+import { toChartPoints, toSessionUser, toTrainee, toWorkout, unwrapList } from '@/api/adapters/viewModels'
 
 describe('view model adapters', () => {
   it('unwraps collection envelopes without leaking DTO shape to UI', () => {
@@ -20,5 +20,31 @@ describe('view model adapters', () => {
 
   it('keeps workout status explicit so drafts can be filtered out', () => {
     expect(toWorkout({ id: 'w1', status: 'DRAFT', sets: [] }).status).toBe('DRAFT')
+  })
+
+  it('maps finalized workout history returned by the backend list endpoint', () => {
+    expect(
+      toWorkout({
+        _id: 'w1',
+        status: 'FINALIZED',
+        completedAt: '2026-07-26T20:33:35.112Z',
+        gym: 'Seed Gym',
+        planDay: { name: 'Push day' },
+        exercises: [{ _id: 's1' }, { _id: 's2' }],
+      }),
+    ).toMatchObject({
+      id: 'w1',
+      status: 'FINALIZED',
+      gymName: 'Seed Gym',
+      title: 'Push day',
+      summary: '2 sets',
+    })
+  })
+
+  it('formats chart point labels for readable tooltips', () => {
+    const [point] = toChartPoints([{ date: '2026-07-26T20:33:35.112Z', value: 1024 }])
+
+    expect(point?.label).not.toBe('2026-07-26T20:33:35.112Z')
+    expect(point?.label).toContain('2026')
   })
 })
