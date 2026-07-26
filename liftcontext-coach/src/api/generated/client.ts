@@ -5774,6 +5774,146 @@ export function useGetApiV1TrainerTrainees<
 }
 
 /**
+ * @summary Get trainee active plan
+ */
+export type getApiV1TrainerTraineesTraineeIdActivePlanResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type getApiV1TrainerTraineesTraineeIdActivePlanResponseSuccess =
+  getApiV1TrainerTraineesTraineeIdActivePlanResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1TrainerTraineesTraineeIdActivePlanResponse =
+  getApiV1TrainerTraineesTraineeIdActivePlanResponseSuccess;
+
+export const getGetApiV1TrainerTraineesTraineeIdActivePlanUrl = (
+  traineeId: string,
+) => {
+  return `/api/v1/trainer/trainees/${traineeId}/active-plan`;
+};
+
+export const getApiV1TrainerTraineesTraineeIdActivePlan = async (
+  traineeId: string,
+  options?: RequestInit,
+): Promise<getApiV1TrainerTraineesTraineeIdActivePlanResponse> => {
+  return orvalMutator<getApiV1TrainerTraineesTraineeIdActivePlanResponse>(
+    getGetApiV1TrainerTraineesTraineeIdActivePlanUrl(traineeId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetApiV1TrainerTraineesTraineeIdActivePlanQueryKey = (
+  traineeId?: MaybeRef<string>,
+) => {
+  return [
+    "api",
+    "v1",
+    "trainer",
+    "trainees",
+    traineeId,
+    "active-plan",
+  ] as const;
+};
+
+export const getGetApiV1TrainerTraineesTraineeIdActivePlanQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>
+  >,
+  TError = unknown,
+>(
+  traineeId: MaybeRef<string>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof orvalMutator>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    getGetApiV1TrainerTraineesTraineeIdActivePlanQueryKey(traineeId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>>
+  > = ({ signal }) =>
+    getApiV1TrainerTraineesTraineeIdActivePlan(unref(traineeId), {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: computed(() => !!unref(traineeId)),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>>,
+    TError,
+    TData
+  >;
+};
+
+export type GetApiV1TrainerTraineesTraineeIdActivePlanQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>>
+>;
+export type GetApiV1TrainerTraineesTraineeIdActivePlanQueryError = unknown;
+
+/**
+ * @summary Get trainee active plan
+ */
+
+export function useGetApiV1TrainerTraineesTraineeIdActivePlan<
+  TData = Awaited<
+    ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>
+  >,
+  TError = unknown,
+>(
+  traineeId: MaybeRef<string>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TrainerTraineesTraineeIdActivePlan>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof orvalMutator>;
+  },
+  queryClient?: QueryClient,
+): UseQueryReturnType<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetApiV1TrainerTraineesTraineeIdActivePlanQueryOptions(
+      traineeId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<
+    QueryKey,
+    TData,
+    TError
+  >;
+
+  return query;
+}
+
+/**
  * @summary Unlink trainee
  */
 export type postApiV1TrainerTraineesTraineeIdUnlinkResponse200 = {
