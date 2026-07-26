@@ -7,9 +7,5 @@
  */
 
 export interface RelationshipRequest {
-  /**
-   * @minLength 8
-   * @maxLength 12
-   */
-  traineeCode: string;
+  traineeEmail: string;
 }
