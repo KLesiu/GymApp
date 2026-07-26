@@ -32,7 +32,7 @@ const run = async () => {
   );
   const exercise = await api.post(
     "/api/v1/exercises",
-    { name: "Smoke Press", muscleGroupId: group.data._id, formula: "STANDARD" },
+    { name: "Smoke Press", bodyPart: "CHEST", muscleGroupId: group.data._id, formula: "STANDARD" },
     auth,
   );
   await api.post(

@@ -1,5 +1,6 @@
 import {
   useFinalizeWorkout,
+  useLastScores,
   useUpdateWorkoutSets,
   useWorkout,
 } from "@/api/domain";
@@ -38,6 +39,11 @@ export default function ActiveWorkout() {
   const workout = useWorkout(workoutId);
   const updateSets = useUpdateWorkoutSets();
   const finalize = useFinalizeWorkout();
+  const {
+    data: lastScoresData,
+    isPending: lastScoresPending,
+    mutate: loadLastScores,
+  } = useLastScores();
   const [sets, setSets] = useState<SetDraft[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
     null,
@@ -84,6 +90,35 @@ export default function ActiveWorkout() {
     groupedSets[0] ??
     [];
   const selectedExercise = selectedSets[0];
+  const selectedExerciseName = selectedExercise?.exerciseName;
+  const selectedWorkoutGymId = workout.data?.gymId;
+
+  useEffect(() => {
+    if (!selectedExerciseId || !selectedWorkoutGymId || selectedSets.length === 0)
+      return;
+
+    loadLastScores({
+      exerciseId: selectedExerciseId,
+      ...(selectedExerciseName ? { exerciseName: selectedExerciseName } : {}),
+      gymId: selectedWorkoutGymId,
+      series: selectedSets.length,
+    });
+  }, [
+    loadLastScores,
+    selectedExerciseId,
+    selectedExerciseName,
+    selectedSets.length,
+    selectedWorkoutGymId,
+  ]);
+
+  const lastScoreText = useMemo(() => {
+    if (lastScoresPending) return "Loading...";
+    if (!lastScoresData?.length) return "—";
+
+    return lastScoresData
+      .map((score) => `${score.series}: ${score.reps} × ${score.weight}kg`)
+      .join(" · ");
+  }, [lastScoresData, lastScoresPending]);
 
   const updateSet = (
     clientKey: string,
@@ -310,7 +345,7 @@ export default function ActiveWorkout() {
               <Text style={styles.scoreHighlight}>
                 {workout.data?.gym ?? "this gym"}
               </Text>
-              : —
+              : {lastScoreText}
             </Text>
 
             <View style={styles.tableHeader}>

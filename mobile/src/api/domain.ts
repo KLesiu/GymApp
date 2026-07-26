@@ -124,23 +124,75 @@ export type WorkoutDetail = Workout & {
 export type LastScore = {
   weight: number;
   reps: number;
-  unit: string;
+  unit?: string;
   series: number;
   completedAt?: string;
   date?: string;
   gymName?: string;
 };
+export type EloChartPoint = {
+  createdAt: string;
+  newElo: number;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === "object");
+
+const toNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const fromSeriesScore = (value: unknown): LastScore | null => {
+  if (!isRecord(value)) return null;
+  const series = toNumber(value.series);
+  const score = value.score;
+  if (series === null || !isRecord(score)) return null;
+
+  const reps = toNumber(score.reps);
+  const weight = toNumber(score.weight);
+  if (reps === null || weight === null) return null;
+
+  return {
+    series,
+    reps,
+    weight,
+    ...(typeof score.unit === "string" ? { unit: score.unit } : {}),
+    ...(typeof score.completedAt === "string"
+      ? { completedAt: score.completedAt }
+      : {}),
+    ...(typeof score.date === "string" ? { date: score.date } : {}),
+    ...(typeof score.gymName === "string" ? { gymName: score.gymName } : {}),
+  };
+};
 
 const toLastScores = (value: unknown): LastScore[] => {
   if (Array.isArray(value)) return value as LastScore[];
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
+  if (isRecord(value)) {
+    if (Array.isArray(value.seriesScores))
+      return value.seriesScores.flatMap((item) => {
+        const score = fromSeriesScore(item);
+        return score ? [score] : [];
+      });
+    const record = value;
     if (Array.isArray(record.scores)) return record.scores as LastScore[];
     if (Array.isArray(record.items)) return record.items as LastScore[];
     if (Array.isArray(record.lastScores))
       return record.lastScores as LastScore[];
   }
   return [];
+};
+const toEloChart = (value: unknown): EloChartPoint[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const createdAt = item.createdAt ?? item.date;
+    const newElo = item.newElo ?? item.value;
+
+    if (typeof createdAt !== "string" || typeof newElo !== "number")
+      return [];
+
+    return [{ createdAt, newElo }];
+  });
 };
 export type Measurement = {
   _id: string;
@@ -246,9 +298,8 @@ export const useEloChart = () =>
   useQuery({
     queryKey: keys.eloChart,
     queryFn: ({ signal }) =>
-      request<{ createdAt: string; newElo: number }[]>(
-        { url: "/api/v1/elo/chart" },
-        signal,
+      request<unknown>({ url: "/api/v1/elo/chart" }, signal).then(
+        toEloChart,
       ),
   });
 export const useMeasurements = (bodyPart = "WEIGHT") =>

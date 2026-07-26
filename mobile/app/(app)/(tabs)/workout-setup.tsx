@@ -17,8 +17,9 @@ import {
 } from "@/components/primitives";
 import { formatDate } from "@/i18n";
 import { theme } from "@/theme/tokens";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 type SetupStep = "gym" | "day";
@@ -32,6 +33,14 @@ export default function WorkoutSetup() {
   const [step, setStep] = useState<SetupStep>("gym");
   const [gymId, setGymId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setStep("gym");
+      setGymId(null);
+      setMessage(null);
+    }, []),
+  );
 
   const selectedGym = useMemo(
     () => gyms.data?.find((gym) => gym._id === gymId) ?? null,
