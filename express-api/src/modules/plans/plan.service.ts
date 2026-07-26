@@ -131,7 +131,16 @@ export class PlanService {
 
   async getActivePlan(traineeId: string) {
     const assignment = await this.repository.getActiveAssignment(traineeId)
-    return assignment ? mapPlan(assignment.plan) : null
+    if (!assignment) {
+      return null
+    }
+    const plan = mapPlan(assignment.plan)
+    return plan ? { ...plan, assignedByTrainer: assignment.trainerId !== traineeId } : null
+  }
+
+  async getTrainerTraineeActivePlan(trainerId: string, traineeId: string) {
+    await this.accessService.assertSelfOrActiveTrainerRelationship(trainerId, traineeId)
+    return this.getActivePlan(traineeId)
   }
 
   async setSelfActivePlan(userId: string, planId: string) {

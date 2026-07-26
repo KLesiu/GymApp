@@ -41,7 +41,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
     expect(days.body).toHaveLength(1)
   })
 
-  it("supports plan-day create read and delete", async () => {
+  it("supports plan-day create read update and delete", async () => {
     const user = await register("plan-day-user", "plan-day-user@example.com")
     const exercise = await createExercise(
       environment,
@@ -67,13 +67,185 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
       environment.client.get(`/api/v1/plan-days/${day.body._id}`),
       user.token,
     )
+    const updated = await authRequest(
+      environment.client.patch(`/api/v1/plan-days/${day.body._id}`),
+      user.token,
+    ).send({
+      name: "Extra Updated",
+      weekNumber: 1,
+      orderIndex: 1,
+      exercises: [{ exerciseId: exercise.body._id, series: 4, repsTarget: 8, orderIndex: 0 }],
+    })
     const deleted = await authRequest(
       environment.client.delete(`/api/v1/plan-days/${day.body._id}`),
       user.token,
     )
 
     expect(detail.body.name).toBe("Extra")
+    expect(updated.body.name).toBe("Extra Updated")
+    expect(updated.body.exercises[0]).toMatchObject({ series: 4, repsTarget: 8 })
     expect(deleted.body.msg).toBe("DELETED")
+  })
+
+  it("creates a plan day after deleting an earlier day without order collisions", async () => {
+    const user = await register("plan-day-order", "plan-day-order@example.com")
+    const exercise = await createExercise(environment, user.token, "Order Row", "BACK", "STANDARD")
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), user.token).send({
+      name: "Plan Day Order Plan",
+      days: [
+        {
+          name: "First",
+          weekNumber: 1,
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 2, repsTarget: 10, orderIndex: 0 }],
+        },
+        {
+          name: "Second",
+          weekNumber: 1,
+          orderIndex: 1,
+          exercises: [{ exerciseId: exercise.body._id, series: 3, repsTarget: 10, orderIndex: 0 }],
+        },
+      ],
+    })
+
+    await authRequest(
+      environment.client.delete(`/api/v1/plan-days/${plan.body.days[0]._id}`),
+      user.token,
+    )
+    const added = await authRequest(
+      environment.client.post(`/api/v1/plans/${plan.body._id}/days`),
+      user.token,
+    ).send({
+      name: "Third",
+      weekNumber: 1,
+      orderIndex: 1,
+      exercises: [{ exerciseId: exercise.body._id, series: 4, repsTarget: 10, orderIndex: 0 }],
+    })
+
+    expect(added.status).toBe(201)
+    expect(added.body.name).toBe("Third")
+    expect(added.body.orderIndex).toBeGreaterThan(1)
+  })
+
+  it("returns multi-week plan days grouped by week before day order", async () => {
+    const user = await register("plan-day-sort", "plan-day-sort@example.com")
+    const exercise = await createExercise(environment, user.token, "Sort Row", "BACK", "STANDARD")
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), user.token).send({
+      name: "Plan Day Sort Plan",
+      weeksCount: 2,
+      days: [
+        {
+          name: "Week 2 First",
+          weekNumber: 2,
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 2, repsTarget: 10, orderIndex: 0 }],
+        },
+        {
+          name: "Week 1 First",
+          weekNumber: 1,
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 3, repsTarget: 10, orderIndex: 0 }],
+        },
+        {
+          name: "Week 1 Second",
+          weekNumber: 1,
+          orderIndex: 1,
+          exercises: [{ exerciseId: exercise.body._id, series: 4, repsTarget: 10, orderIndex: 0 }],
+        },
+      ],
+    })
+
+    const detail = await authRequest(
+      environment.client.get(`/api/v1/plans/${plan.body._id}`),
+      user.token,
+    )
+
+    expect(detail.body.days.map((day: { name: string }) => day.name)).toEqual([
+      "Week 1 First",
+      "Week 1 Second",
+      "Week 2 First",
+    ])
+  })
+
+  it("moves an edited plan day to the end of its target week", async () => {
+    const user = await register("plan-day-move", "plan-day-move@example.com")
+    const exercise = await createExercise(environment, user.token, "Move Row", "BACK", "STANDARD")
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), user.token).send({
+      name: "Plan Day Move Plan",
+      weeksCount: 2,
+      days: [
+        {
+          name: "Week 1 Move Me",
+          weekNumber: 1,
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 2, repsTarget: 10, orderIndex: 0 }],
+        },
+        {
+          name: "Week 2 First",
+          weekNumber: 2,
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 3, repsTarget: 10, orderIndex: 0 }],
+        },
+      ],
+    })
+
+    const moved = await authRequest(
+      environment.client.patch(`/api/v1/plan-days/${plan.body.days[0]._id}`),
+      user.token,
+    ).send({
+      name: "Week 2 Second",
+      weekNumber: 2,
+      orderIndex: 0,
+      exercises: [{ exerciseId: exercise.body._id, series: 4, repsTarget: 8, orderIndex: 0 }],
+    })
+    const detail = await authRequest(
+      environment.client.get(`/api/v1/plans/${plan.body._id}`),
+      user.token,
+    )
+
+    expect(moved.body.weekNumber).toBe(2)
+    expect(moved.body.orderIndex).toBe(1)
+    expect(detail.body.days.map((day: { name: string }) => day.name)).toEqual([
+      "Week 2 First",
+      "Week 2 Second",
+    ])
+  })
+
+  it("deletes a self-active plan instead of cloning it back to the same user", async () => {
+    const user = await register("self-active-delete", "self-active-delete@example.com")
+    const exercise = await createExercise(
+      environment,
+      user.token,
+      "Self Active Row",
+      "BACK",
+      "STANDARD",
+    )
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), user.token).send({
+      name: "Self Active Delete Plan",
+      days: [
+        {
+          name: "Self Day",
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 2, repsTarget: 10, orderIndex: 0 }],
+        },
+      ],
+    })
+    await authRequest(environment.client.post("/api/v1/plans/active"), user.token).send({
+      planId: plan.body._id,
+    })
+
+    const deleted = await authRequest(
+      environment.client.delete(`/api/v1/plans/${plan.body._id}`),
+      user.token,
+    )
+    const active = await authRequest(environment.client.get("/api/v1/plans/active"), user.token)
+    const list = await authRequest(environment.client.get("/api/v1/plans"), user.token)
+
+    expect(deleted.body.msg).toBe("DELETED")
+    expect(active.body).toBeNull()
+    expect(
+      list.body.some((item: { name: string }) => item.name === "Self Active Delete Plan"),
+    ).toBe(false)
   })
 
   it("exposes global starter exercises for new user plans", async () => {
@@ -158,7 +330,13 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
 
     expect(assignment.status).toBe(201)
     const active = await authRequest(environment.client.get("/api/v1/plans/active"), trainee.token)
+    const trainerActive = await authRequest(
+      environment.client.get(`/api/v1/trainer/trainees/${trainee.userId}/active-plan`),
+      trainer.token,
+    )
     expect(active.body._id).toBe(plan.body._id)
+    expect(active.body.assignedByTrainer).toBe(true)
+    expect(trainerActive.body._id).toBe(plan.body._id)
     const detached = await authRequest(
       environment.client.post(`/api/v1/trainer/trainees/${trainee.userId}/unlink`),
       trainer.token,
@@ -170,6 +348,158 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
       trainee.token,
     ).send()
     expect(resurrectDetached.status).toBe(409)
+  })
+
+  it("keeps assigned trainee plan when trainer deletes the source template", async () => {
+    const trainer = await register(
+      "trainer-delete-template",
+      "trainer-delete-template@example.com",
+      ["TRAINER"],
+    )
+    const trainee = await register("trainee-delete-template", "trainee-delete-template@example.com")
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
+    await authRequest(
+      environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
+      trainee.token,
+    ).send()
+
+    const exercise = await createExercise(
+      environment,
+      trainer.token,
+      "Template Deadlift",
+      "HAMSTRINGS",
+      "STRENGTH",
+    )
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), trainer.token).send({
+      name: "Template To Delete",
+      days: [
+        {
+          name: "Posterior Chain",
+          orderIndex: 0,
+          exercises: [{ exerciseId: exercise.body._id, series: 4, repsTarget: 8, orderIndex: 0 }],
+        },
+      ],
+    })
+    await authRequest(
+      environment.client.post(`/api/v1/plans/${plan.body._id}/assignments`),
+      trainer.token,
+    ).send({ traineeId: trainee.userId })
+
+    const deleted = await authRequest(
+      environment.client.delete(`/api/v1/plans/${plan.body._id}`),
+      trainer.token,
+    )
+    const active = await authRequest(environment.client.get("/api/v1/plans/active"), trainee.token)
+    const trainerPlans = await authRequest(environment.client.get("/api/v1/plans"), trainer.token)
+
+    expect(deleted.body.msg).toBe("DELETED")
+    expect(active.status).toBe(200)
+    expect(active.body._id).not.toBe(plan.body._id)
+    expect(active.body.name).toBe("Template To Delete")
+    expect(active.body.days[0].name).toBe("Posterior Chain")
+    expect(active.body.days[0].exercises[0]).toMatchObject({ series: 4, repsTarget: 8 })
+    expect(trainerPlans.body.some((item: { _id: string }) => item._id === plan.body._id)).toBe(
+      false,
+    )
+  })
+
+  it("does not snapshot inactive plan assignments when trainer deletes a template", async () => {
+    const trainer = await register(
+      "trainer-delete-inactive",
+      "trainer-delete-inactive@example.com",
+      ["TRAINER"],
+    )
+    const trainee = await register("trainee-delete-inactive", "trainee-delete-inactive@example.com")
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
+    await authRequest(
+      environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
+      trainee.token,
+    ).send()
+    const exercise = await createExercise(
+      environment,
+      trainer.token,
+      "Inactive Template Row",
+      "BACK",
+      "STANDARD",
+    )
+    const oldPlan = await createPlan(
+      environment,
+      trainer.token,
+      "Inactive Template",
+      exercise.body._id,
+    )
+    const currentPlan = await createPlan(
+      environment,
+      trainer.token,
+      "Current Template",
+      exercise.body._id,
+    )
+
+    await authRequest(
+      environment.client.post(`/api/v1/plans/${oldPlan.body._id}/assignments`),
+      trainer.token,
+    ).send({ traineeId: trainee.userId })
+    await authRequest(
+      environment.client.post(`/api/v1/plans/${currentPlan.body._id}/assignments`),
+      trainer.token,
+    ).send({ traineeId: trainee.userId })
+    await authRequest(environment.client.delete(`/api/v1/plans/${oldPlan.body._id}`), trainer.token)
+    const traineePlans = await authRequest(environment.client.get("/api/v1/plans"), trainee.token)
+    const active = await authRequest(environment.client.get("/api/v1/plans/active"), trainee.token)
+
+    expect(
+      traineePlans.body.some((item: { name: string }) => item.name === "Inactive Template"),
+    ).toBe(false)
+    expect(active.body._id).toBe(currentPlan.body._id)
+  })
+
+  it("allows trainee to start a workout from a trainer-assigned plan", async () => {
+    const trainer = await register("trainer-workout-plan", "trainer-workout-plan@example.com", [
+      "TRAINER",
+    ])
+    const trainee = await register("trainee-workout-plan", "trainee-workout-plan@example.com")
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
+    await authRequest(
+      environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
+      trainee.token,
+    ).send()
+    const exercise = await createExercise(
+      environment,
+      trainer.token,
+      "Trainer Workout Row",
+      "BACK",
+      "STANDARD",
+    )
+    const plan = await createPlan(
+      environment,
+      trainer.token,
+      "Trainer Workout Plan",
+      exercise.body._id,
+    )
+    const gym = await authRequest(environment.client.post("/api/v1/gyms"), trainee.token).send({
+      name: "Trainee Gym",
+      address: "Address",
+    })
+    await authRequest(
+      environment.client.post(`/api/v1/plans/${plan.body._id}/assignments`),
+      trainer.token,
+    ).send({ traineeId: trainee.userId })
+
+    const workout = await authRequest(
+      environment.client.post("/api/v1/workouts"),
+      trainee.token,
+    ).send({
+      gymId: gym.body._id,
+      planId: plan.body._id,
+      planDayId: plan.body.days[0]._id,
+      startedAt: new Date("2026-01-04T10:00:00.000Z").toISOString(),
+      sets: [
+        { exerciseId: exercise.body._id, series: 1, reps: null, weight: null, unit: "KILOGRAMS" },
+      ],
+    })
+
+    expect(workout.status, JSON.stringify(workout.body)).toBe(201)
+    expect(workout.body.planDay?._id ?? workout.body.planDay?.id).toBe(plan.body.days[0]._id)
   })
 
   it("allows trainers to invite trainees registered with mixed-case email", async () => {
@@ -473,6 +803,23 @@ const createRelationship = async (
 ) =>
   authRequest(environment.client.post("/api/v1/trainer/relationships"), trainerToken).send({
     traineeEmail,
+  })
+
+const createPlan = async (
+  environment: Parameters<Parameters<typeof describeAcceptance>[1]>[0],
+  token: string,
+  name: string,
+  exerciseId: string,
+) =>
+  authRequest(environment.client.post("/api/v1/plans"), token).send({
+    name,
+    days: [
+      {
+        name: "Training Day",
+        orderIndex: 0,
+        exercises: [{ exerciseId, series: 3, repsTarget: 10, orderIndex: 0 }],
+      },
+    ],
   })
 
 const createScaleTemplate = async (

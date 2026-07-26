@@ -858,6 +858,14 @@ export const openApiSpec = {
     "/api/v1/trainer/trainees": {
       get: { summary: "List active trainees", security: auth, responses: { "200": ok } },
     },
+    "/api/v1/trainer/trainees/{traineeId}/active-plan": {
+      get: {
+        summary: "Get trainee active plan",
+        security: auth,
+        parameters: [pathParam("traineeId")],
+        responses: { "200": ok },
+      },
+    },
     "/api/v1/trainer/trainees/{traineeId}/unlink": {
       post: {
         summary: "Unlink trainee",

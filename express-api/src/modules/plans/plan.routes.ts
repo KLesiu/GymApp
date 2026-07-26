@@ -48,6 +48,19 @@ export const buildPlanRouter = (prisma: PrismaClient) => {
     response.json(await service.getActivePlan(getActorId(request)))
   })
 
+  router.get(
+    "/trainer/trainees/:traineeId/active-plan",
+    requireAuth,
+    requireRole("TRAINER"),
+    validate({ params: assignPlanSchema.pick({ traineeId: true }) }),
+    async (request, response) => {
+      const params = assignPlanSchema.pick({ traineeId: true }).parse(request.params)
+      response.json(
+        await service.getTrainerTraineeActivePlan(getActorId(request), params.traineeId),
+      )
+    },
+  )
+
   router.post(
     "/plans/active",
     requireAuth,
