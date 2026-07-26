@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | --- |
 | PostgreSQL + Prisma backend | Prisma schema and migrations | N/A | N/A | API acceptance on PostgreSQL | Done |
 | JWT authorization | Passport JWT | Token storage/client | Token storage/client | Auth acceptance tests | Done |
-| Trainer invite by public code | `traineeCode` relationship endpoint | Shows own code and pending invites | Invite form uses code | Acceptance tests updated | Done |
+| Trainer invite by email | `traineeEmail` relationship endpoint | Shows pending invites | Invite form uses email and invitation history | Acceptance tests updated | Done |
 | One active trainer per trainee | Transaction + partial index | Accept/reject UI | Trainee list | Acceptance coverage | Done |
 | Same-gym workout benchmark | Same-gym comparison endpoint/finalization | Workout setup renders same-gym benchmark preview | Read-only profile/ranking context | API acceptance + mobile benchmark tests | Done |
 | Multiweek plan model | `weeksCount`, `weekNumber` migration/API | Plan UI groups days by week | Plan list/editor show multiweek structure | Existing plan tests | Done |

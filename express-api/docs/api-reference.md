@@ -138,7 +138,7 @@ Najwazniejsze modele:
 
 #### Relacja trener-podopieczny
 
-1. Trener zaprasza podopiecznego przez `POST /api/v1/trainer/relationships`.
+1. Trener zaprasza podopiecznego emailem przez `POST /api/v1/trainer/relationships`.
 2. Podopieczny akceptuje albo odrzuca relacje.
 3. Aktywna relacja pozwala trenerowi widziec wybrane dane podopiecznego i przypisywac plany/raporty.
 4. Relacja moze byc odpieta przez trenera lub podopiecznego.
@@ -198,7 +198,8 @@ Najwazniejsze modele:
 | GET | `/api/v1/measurements/history` | Tak | Historia pomiarow. |
 | GET | `/api/v1/measurements/trends` | Tak | Trendy pomiarow. |
 | GET | `/api/v1/measurements/{measurementId}` | Tak | Szczegoly pomiaru. |
-| POST | `/api/v1/trainer/relationships` | Trener | Zaproszenie podopiecznego. |
+| GET | `/api/v1/trainer/relationships` | Trener | Historia zaproszen podopiecznych. |
+| POST | `/api/v1/trainer/relationships` | Trener | Zaproszenie podopiecznego przez email. |
 | POST | `/api/v1/trainee/relationships/{relationshipId}/accept` | Podopieczny | Akceptacja relacji. |
 | POST | `/api/v1/trainee/relationships/{relationshipId}/reject` | Podopieczny | Odrzucenie relacji. |
 | POST | `/api/v1/trainee/trainer/detach` | Podopieczny | Odpiecie aktualnego trenera. |
@@ -376,7 +377,7 @@ Main models:
 
 #### Trainer-trainee relationship
 
-1. A trainer invites a trainee with `POST /api/v1/trainer/relationships`.
+1. A trainer invites a trainee by email with `POST /api/v1/trainer/relationships`.
 2. The trainee accepts or rejects the relationship.
 3. An active relationship lets the trainer view selected trainee data and assign plans/reports.
 4. The relationship can be detached by either side.
@@ -436,7 +437,8 @@ Main models:
 | GET | `/api/v1/measurements/history` | Yes | Measurement history. |
 | GET | `/api/v1/measurements/trends` | Yes | Measurement trends. |
 | GET | `/api/v1/measurements/{measurementId}` | Yes | Measurement details. |
-| POST | `/api/v1/trainer/relationships` | Trainer | Invite trainee. |
+| GET | `/api/v1/trainer/relationships` | Trainer | List trainee invitation history. |
+| POST | `/api/v1/trainer/relationships` | Trainer | Invite trainee by email. |
 | POST | `/api/v1/trainee/relationships/{relationshipId}/accept` | Trainee | Accept relationship. |
 | POST | `/api/v1/trainee/relationships/{relationshipId}/reject` | Trainee | Reject relationship. |
 | POST | `/api/v1/trainee/trainer/detach` | Trainee | Detach current trainer. |

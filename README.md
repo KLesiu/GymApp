@@ -8,6 +8,22 @@ LiftContext is a three-part engineering demonstrator for strength training and r
 
 ## Local demo
 
+Fast root commands:
+
+```bash
+npm run dev:all
+```
+
+This starts PostgreSQL, checks and applies pending Prisma migrations, regenerates API clients, then starts `express-api`, `liftcontext-coach`, and `mobile`.
+
+For a destructive fresh start:
+
+```bash
+npm run dev:reset
+```
+
+This removes the local PostgreSQL Docker volume, recreates the database from migrations, seeds demo users plus 50 global starter exercises, regenerates clients, then starts all three apps.
+
 1. Start PostgreSQL and the API:
 
 ```bash
@@ -56,5 +72,5 @@ The API acceptance tests run against a real PostgreSQL container started with Do
 ## Core demo scenarios
 
 - Trainee registers, creates gym/exercise/plan, finishes workouts, sees same-gym benchmark and LiftContext Rating changes.
-- Trainer registers, invites trainee by public connection code, assigns plans/reports, and sees authorized trainee data.
+- Trainer registers, invites trainee by email, assigns plans/reports, and sees authorized trainee data.
 - Report templates use frozen versions so old assignments render their original fields after template edits.
