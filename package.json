@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev:all": "node scripts/dev-all.mjs",
-    "dev:reset": "node scripts/reset-and-dev.mjs"
+    "dev:reset": "node scripts/reset-and-dev.mjs",
+    "test:all": "node scripts/test-all.mjs"
   }
 }
