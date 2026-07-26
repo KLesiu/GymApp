@@ -25,7 +25,9 @@ export const useTraineeBundle = (traineeId: MaybeRefOrGetter<string>) => {
   return { trainee, trainees, elo, eloChart, measurements, workouts, reports }
 }
 
-export const useInviteRelationship = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeCode: string) => apiFetch.post('/api/v1/trainer/relationships', { traineeCode }), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.trainees() }) }) }
+export type TrainerInvitation = { id: string; traineeId: string; traineeName: string; traineeEmail: string; status: string; createdAt?: string; activatedAt?: string | null; detachedAt?: string | null }
+export const useTrainerInvitationsQuery = () => useQuery({ queryKey: queryKeys.trainerInvitations(), queryFn: ({ signal }) => apiFetch.get<TrainerInvitation[]>('/api/v1/trainer/relationships', undefined, signal) })
+export const useInviteRelationship = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeEmail: string) => apiFetch.post('/api/v1/trainer/relationships', { traineeEmail }), onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.trainees() }); qc.invalidateQueries({ queryKey: queryKeys.trainerInvitations() }) } }) }
 export const useUnlinkTrainee = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeId: string) => apiFetch.post(`/api/v1/trainer/trainees/${traineeId}/unlink`), onSuccess: (_data, traineeId) => { qc.removeQueries({ queryKey: queryKeys.trainee(traineeId) }); qc.invalidateQueries({ queryKey: queryKeys.trainees() }) } }) }
 export const useCreatePlan = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (body: unknown) => apiFetch.post('/api/v1/plans', body), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.plans() }) }) }
 export const useAssignPlan = () => useMutation({ mutationFn: ({ planId, traineeId }: { planId: string; traineeId: string }) => apiFetch.post(`/api/v1/plans/${planId}/assignments`, { traineeId }) })

@@ -2,6 +2,7 @@ export const queryKeys = {
   session: ['session'] as const,
   dashboard: () => ['dashboard'] as const,
   trainees: () => ['trainees'] as const,
+  trainerInvitations: () => ['trainees', 'invitations'] as const,
   trainee: (traineeId: string) => ['trainees', traineeId] as const,
   traineeElo: (traineeId: string) => ['trainees', traineeId, 'elo'] as const,
   traineeMeasurements: (traineeId: string) => ['trainees', traineeId, 'measurements'] as const,

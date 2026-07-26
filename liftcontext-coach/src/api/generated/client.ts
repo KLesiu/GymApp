@@ -25,6 +25,7 @@ import type {
   AssignPlanRequest,
   CreateWorkoutRequest,
   ExerciseRequest,
+  ExerciseResponse,
   FinalizeWorkoutRequest,
   GetApiV1MeasurementsHistoryParams,
   GetApiV1MeasurementsParams,
@@ -37,6 +38,7 @@ import type {
   LoginRequest,
   MeasurementRequest,
   MuscleGroupRequest,
+  MuscleGroupResponse,
   PlanDayRequest,
   PlanRequest,
   RecurringRuleRequest,
@@ -48,6 +50,7 @@ import type {
   ReportSubmitRequest,
   ReportTemplateRequest,
   SetActivePlanRequest,
+  TrainerInvitationResponse,
   UpdateExerciseRequest,
   UpdatePlanRequest,
   UpdateRecurringRuleRequest,
@@ -1067,7 +1070,7 @@ export const useDeleteApiV1GymsGymId = <TError = unknown, TContext = unknown>(
  * @summary List muscle groups
  */
 export type getApiV1MuscleGroupsResponse200 = {
-  data: void;
+  data: MuscleGroupResponse[];
   status: 200;
 };
 
@@ -1275,7 +1278,7 @@ export const usePostApiV1MuscleGroups = <TError = unknown, TContext = unknown>(
  * @summary List exercises
  */
 export type getApiV1ExercisesResponse200 = {
-  data: void;
+  data: ExerciseResponse[];
   status: 200;
 };
 
@@ -1475,7 +1478,7 @@ export const usePostApiV1Exercises = <TError = unknown, TContext = unknown>(
  * @summary Get contextual last exercise scores
  */
 export type postApiV1ExercisesLastScoresResponse200 = {
-  data: void;
+  data: ExerciseResponse;
   status: 200;
 };
 
@@ -1582,7 +1585,7 @@ export const usePostApiV1ExercisesLastScores = <
  * @summary Get exercise
  */
 export type getApiV1ExercisesExerciseIdResponse200 = {
-  data: void;
+  data: TrainerInvitationResponse[];
   status: 200;
 };
 
@@ -4876,6 +4879,113 @@ export function useGetApiV1MeasurementsMeasurementId<
     measurementId,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<
+    QueryKey,
+    TData,
+    TError
+  >;
+
+  return query;
+}
+
+/**
+ * @summary List trainer invitations
+ */
+export type getApiV1TrainerRelationshipsResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type getApiV1TrainerRelationshipsResponseSuccess =
+  getApiV1TrainerRelationshipsResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1TrainerRelationshipsResponse =
+  getApiV1TrainerRelationshipsResponseSuccess;
+
+export const getGetApiV1TrainerRelationshipsUrl = () => {
+  return `/api/v1/trainer/relationships`;
+};
+
+export const getApiV1TrainerRelationships = async (
+  options?: RequestInit,
+): Promise<getApiV1TrainerRelationshipsResponse> => {
+  return orvalMutator<getApiV1TrainerRelationshipsResponse>(
+    getGetApiV1TrainerRelationshipsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetApiV1TrainerRelationshipsQueryKey = () => {
+  return ["api", "v1", "trainer", "relationships"] as const;
+};
+
+export const getGetApiV1TrainerRelationshipsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1TrainerRelationships>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getApiV1TrainerRelationships>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof orvalMutator>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = getGetApiV1TrainerRelationshipsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TrainerRelationships>>
+  > = ({ signal }) =>
+    getApiV1TrainerRelationships({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TrainerRelationships>>,
+    TError,
+    TData
+  >;
+};
+
+export type GetApiV1TrainerRelationshipsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TrainerRelationships>>
+>;
+export type GetApiV1TrainerRelationshipsQueryError = unknown;
+
+/**
+ * @summary List trainer invitations
+ */
+
+export function useGetApiV1TrainerRelationships<
+  TData = Awaited<ReturnType<typeof getApiV1TrainerRelationships>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TrainerRelationships>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof orvalMutator>;
+  },
+  queryClient?: QueryClient,
+): UseQueryReturnType<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1TrainerRelationshipsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<
     TData,
