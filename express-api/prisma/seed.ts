@@ -3,6 +3,8 @@ import type { BodyPart, ExerciseEloFormula, MuscleRegion } from "@prisma/client"
 import argon2 from "argon2"
 
 const prisma = new PrismaClient()
+const systemOwnerPasswordHash =
+  "$argon2id$v=19$m=65536,t=3,p=4$hvtKSWgQ966Br7n1M5ddkQ$jW6eI5at4J8bDExqmKY237d/LSVcUAv/QKGq2k0rKq0"
 
 type StarterExercise = {
   readonly name: string
@@ -120,22 +122,22 @@ const seed = async () => {
     },
   })
 
-  await seedGlobalStarterExercises(prisma, passwordHash)
+  await seedGlobalStarterExercises(prisma)
 
   process.stdout.write(
     `Seeded trainer ${trainer.id}, trainee ${trainee.id}, relationship ${relationship.id}, ${starterExercises.length} global exercises\n`,
   )
 }
 
-export const seedGlobalStarterExercises = async (client: PrismaClient, passwordHash: string) => {
+export const seedGlobalStarterExercises = async (client: PrismaClient) => {
   const admin = await client.user.upsert({
     where: { name: "liftcontext-admin" },
-    update: {},
+    update: { passwordHash: systemOwnerPasswordHash, isVisibleInRanking: false },
     create: {
       name: "liftcontext-admin",
       email: "admin@liftcontext.local",
       connectionCode: "ADMIN000001",
-      passwordHash,
+      passwordHash: systemOwnerPasswordHash,
       isVisibleInRanking: false,
       roles: { create: [{ role: "TRAINER" }] },
     },
