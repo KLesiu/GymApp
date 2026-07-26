@@ -42,6 +42,17 @@ type DayEditor = {
 const totalSeries = (day: PlanDay) =>
   day.exercises.reduce((total, exercise) => total + exercise.series, 0);
 
+const groupDaysByWeek = (days: readonly PlanDay[], weeksCount = 1) =>
+  Array.from({ length: Math.max(1, weeksCount) }, (_, index) => {
+    const weekNumber = index + 1;
+    return {
+      weekNumber,
+      days: days
+        .filter((day) => (day.weekNumber ?? 1) === weekNumber)
+        .sort((left, right) => (left.orderIndex ?? 0) - (right.orderIndex ?? 0)),
+    };
+  });
+
 export default function Plans() {
   const plans = usePlans();
   const activePlan = useActivePlan();
@@ -63,6 +74,7 @@ export default function Plans() {
   const [draftName, setDraftName] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
   const [dayName, setDayName] = useState("");
+  const [dayWeekNumber, setDayWeekNumber] = useState("1");
   const [query, setQuery] = useState("");
   const [draftExercises, setDraftExercises] = useState<DraftExercise[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -125,6 +137,7 @@ export default function Plans() {
   const openDayEditor = (plan: Plan, day?: PlanDay) => {
     setDayEditor(day ? { plan, day } : { plan });
     setDayName(day?.name ?? "");
+    setDayWeekNumber(String(day?.weekNumber ?? 1));
     setQuery("");
     setDraftExercises(
       day?.exercises.map((exercise) => ({
@@ -138,6 +151,7 @@ export default function Plans() {
   const closeDayEditor = () => {
     setDayEditor(null);
     setDayName("");
+    setDayWeekNumber("1");
     setQuery("");
     setDraftExercises([]);
     setMessage(null);
@@ -187,9 +201,19 @@ export default function Plans() {
     if (!dayEditor) return;
     const exercisesInput = buildPlanExercises();
     if (!exercisesInput) return;
+    const weekNumber = Number.parseInt(dayWeekNumber, 10);
+    if (
+      !Number.isInteger(weekNumber) ||
+      weekNumber < 1 ||
+      weekNumber > (dayEditor.plan.weeksCount ?? 1)
+    ) {
+      setMessage(`Week must be between 1 and ${dayEditor.plan.weeksCount ?? 1}.`);
+      return;
+    }
 
     const body = {
       name: dayName.trim(),
+      weekNumber,
       orderIndex: dayEditor.day?.orderIndex ?? dayEditor.plan.days.length,
       exercises: exercisesInput,
     };
@@ -251,33 +275,45 @@ export default function Plans() {
             Current training plan
           </Text>
           <Text variant="heading1">{selectedPlan.name}</Text>
+          <Text tone="muted">
+            {selectedPlan.weeksCount ?? 1} week(s), grouped by training week
+          </Text>
           <Button
             label="Add training day"
             onPress={() => openDayEditor(selectedPlan)}
           />
           {selectedPlan.days.length ? (
-            selectedPlan.days.map((day) => (
-              <Card key={day._id} style={styles.dayCard}>
-                <View style={styles.dayRow}>
-                  <View style={styles.dayText}>
-                    <Text variant="subtitle">{day.name}</Text>
-                    <Text tone="muted">Exercises: {day.exercises.length}</Text>
-                    <Text tone="muted">Total series: {totalSeries(day)}</Text>
-                  </View>
-                  <View style={styles.dayActions}>
-                    <IconButton
-                      name="create-outline"
-                      label="Edit training day"
-                      onPress={() => openDayEditor(selectedPlan, day)}
-                    />
-                    <IconButton
-                      name="trash-outline"
-                      label="Delete training day"
-                      onPress={() => setDeletingDay(day)}
-                    />
-                  </View>
-                </View>
-              </Card>
+            groupDaysByWeek(selectedPlan.days, selectedPlan.weeksCount).map((week) => (
+              <View key={week.weekNumber} style={styles.weekGroup}>
+                <Text variant="subtitle">Week {week.weekNumber}</Text>
+                {week.days.length ? (
+                  week.days.map((day) => (
+                    <Card key={day._id} style={styles.dayCard}>
+                      <View style={styles.dayRow}>
+                        <View style={styles.dayText}>
+                          <Text variant="subtitle">{day.name}</Text>
+                          <Text tone="muted">Exercises: {day.exercises.length}</Text>
+                          <Text tone="muted">Total series: {totalSeries(day)}</Text>
+                        </View>
+                        <View style={styles.dayActions}>
+                          <IconButton
+                            name="create-outline"
+                            label="Edit training day"
+                            onPress={() => openDayEditor(selectedPlan, day)}
+                          />
+                          <IconButton
+                            name="trash-outline"
+                            label="Delete training day"
+                            onPress={() => setDeletingDay(day)}
+                          />
+                        </View>
+                      </View>
+                    </Card>
+                  ))
+                ) : (
+                  <Text tone="muted">No training days in this week yet.</Text>
+                )}
+              </View>
             ))
           ) : (
             <EmptyState
@@ -324,7 +360,7 @@ export default function Plans() {
                         tone={isActive ? "success" : "muted"}
                       >
                         {isActive ? "Active plan" : "Inactive"} ·{" "}
-                        {plan.days.length} day(s)
+                        {plan.weeksCount ?? 1} week(s) · {plan.days.length} day(s)
                       </Text>
                       <View style={styles.actionRow}>
                         <Button
@@ -421,6 +457,12 @@ export default function Plans() {
                 label="Day name"
                 value={dayName}
                 onChangeText={setDayName}
+              />
+              <TextField
+                label={`Week number (1-${dayEditor?.plan.weeksCount ?? 1})`}
+                keyboardType="numeric"
+                value={dayWeekNumber}
+                onChangeText={setDayWeekNumber}
               />
               <TextField
                 label="Search exercises"
@@ -530,6 +572,7 @@ const styles = StyleSheet.create({
   selectedPlanCard: { borderColor: theme.colors.context },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
   daysPanel: { flex: 1, gap: theme.space.md },
+  weekGroup: { gap: theme.space.sm },
   dayCard: { backgroundColor: theme.colors.surfaceMuted },
   dayRow: { flexDirection: "row", alignItems: "center", gap: theme.space.md },
   dayText: { flex: 1, gap: theme.space.xs },

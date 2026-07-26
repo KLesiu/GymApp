@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
+
+const setupSource = readFileSync("app/(app)/(tabs)/workout-setup.tsx", "utf8");
 
 const selectSameGymBenchmark = (scores, gymId, exerciseId, series) =>
   scores.find(
@@ -31,4 +34,10 @@ test("does not show benchmark from a different gym", () => {
     ),
     undefined,
   );
+});
+
+test("workout setup renders same-gym benchmark preview", () => {
+  assert.match(setupSource, /useLastScores/);
+  assert.match(setupSource, /BenchmarkCard/);
+  assert.match(setupSource, /SameGymBenchmarkPreview/);
 });

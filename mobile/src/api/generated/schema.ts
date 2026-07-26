@@ -1524,6 +1524,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trainee/relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List pending trainer invitations */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/trainee/trainer/detach": {
         parameters: {
             query?: never;
@@ -1929,12 +1963,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Report submissions with frozen template versions */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ReportSubmissionResponse"][];
+                    };
                 };
             };
         };
@@ -2366,6 +2402,11 @@ export interface components {
         PlanDayRequest: {
             /** @example Push day */
             name: string;
+            /**
+             * @default 1
+             * @example 1
+             */
+            weekNumber: number;
             /** @example 0 */
             orderIndex: number;
             exercises: components["schemas"]["PlanExerciseRequest"][];
@@ -2375,6 +2416,11 @@ export interface components {
             name: string;
             /** @example Simple training plan */
             description?: string;
+            /**
+             * @default 1
+             * @example 2
+             */
+            weeksCount: number;
             days?: components["schemas"]["PlanDayRequest"][];
         };
         UpdatePlanRequest: {
@@ -2382,6 +2428,8 @@ export interface components {
             name?: string;
             /** @example Updated description */
             description?: string;
+            /** @example 2 */
+            weeksCount?: number;
         };
         SetActivePlanRequest: {
             /** Format: uuid */
@@ -2463,8 +2511,8 @@ export interface components {
             takenAt: string;
         };
         RelationshipRequest: {
-            /** Format: uuid */
-            traineeId: string;
+            /** @example 80A48224E947 */
+            traineeCode: string;
         };
         ReportFieldRequest: {
             /** @example mood */
@@ -2479,6 +2527,53 @@ export interface components {
             order: number;
             moduleConfig?: {
                 [key: string]: unknown;
+            };
+        };
+        ReportSubmissionResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            traineeId: string;
+            /** @example seed-trainee */
+            traineeName?: string;
+            /** Format: uuid */
+            assignmentId: string;
+            /** @example Weekly check-in */
+            templateName: string;
+            template?: {
+                /** Format: uuid */
+                id: string;
+                /** @example Weekly check-in */
+                name: string;
+            };
+            templateVersion: {
+                /** Format: uuid */
+                id: string;
+                /** @example 2 */
+                version: number;
+                snapshot: {
+                    fields: components["schemas"]["ReportFieldRequest"][];
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+            /**
+             * @example {
+             *       "mood": "good"
+             *     }
+             */
+            answers: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            submittedAt: string;
+            feedback?: {
+                overallComment?: string | null;
+                fieldComments?: {
+                    [key: string]: unknown;
+                } | null;
+                /** Format: date-time */
+                readAt?: string | null;
             };
         };
         ReportTemplateRequest: {

@@ -14,4 +14,5 @@ export const keys = {
     ["measurements", "trends", bodyPart] as const,
   reports: ["reports", "assignments"] as const,
   currentCoach: ["coach", "current"] as const,
+  coachInvitations: ["coach", "invitations"] as const,
 };

@@ -3,9 +3,11 @@ import { keys } from "@/api/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type User = {
+  id?: string;
   _id: string;
   name: string;
   email?: string;
+  connectionCode?: string;
   roles?: string[];
   elo?: number;
 };
@@ -64,6 +66,7 @@ export type PlanExercise = {
 export type PlanDay = {
   _id: string;
   name: string;
+  weekNumber?: number;
   orderIndex?: number;
   exercises: PlanExercise[];
 };
@@ -71,6 +74,7 @@ export type Plan = {
   _id: string;
   name: string;
   description?: string | null;
+  weeksCount?: number;
   days: PlanDay[];
   assignedByTrainer?: boolean;
 };
@@ -141,10 +145,18 @@ export type ReportAssignment = {
   dueAt?: string;
 };
 export type CurrentCoach = {
+  id?: string;
   _id: string;
   status: "ACTIVE";
   activatedAt?: string | null;
   trainer: User;
+};
+export type CoachInvitation = {
+  id: string;
+  _id?: string;
+  status: "PENDING";
+  createdAt?: string;
+  trainer: Pick<User, "id" | "_id" | "name" | "email">;
 };
 
 export const useMe = () =>
@@ -158,6 +170,12 @@ export const useCurrentCoach = () =>
     queryKey: keys.currentCoach,
     queryFn: ({ signal }) =>
       request<CurrentCoach | null>({ url: "/api/v1/trainee/trainer" }, signal),
+  });
+export const useCoachInvitations = () =>
+  useQuery({
+    queryKey: keys.coachInvitations,
+    queryFn: ({ signal }) =>
+      request<CoachInvitation[]>({ url: "/api/v1/trainee/relationships" }, signal),
   });
 export const useGyms = () =>
   useQuery({
@@ -377,7 +395,10 @@ export const useUpdatePlan = () => {
     mutationFn: ({
       planId,
       body,
-    }: { planId: string; body: { name?: string; description?: string } }) =>
+    }: {
+      planId: string;
+      body: { name?: string; description?: string; weeksCount?: number };
+    }) =>
       request<Plan>({
         url: `/api/v1/plans/${planId}`,
         method: "PATCH",
@@ -442,6 +463,7 @@ export const useDeactivatePlan = () => {
 };
 type PlanDayBody = {
   name: string;
+  weekNumber?: number;
   orderIndex: number;
   exercises: PlanExercise[];
 };
@@ -602,11 +624,11 @@ export const useCreateMeasurement = () => {
 export const useConnectCoach = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (traineeId: string) =>
+    mutationFn: (traineeCode: string) =>
       request({
         url: "/api/v1/trainer/relationships",
         method: "POST",
-        data: { traineeId },
+        data: { traineeCode },
       }),
     onSuccess: async () => {
       await Promise.all([
@@ -615,6 +637,33 @@ export const useConnectCoach = () => {
         qc.invalidateQueries({ queryKey: keys.me }),
       ]);
     },
+  });
+};
+export const useAcceptCoachInvitation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (relationshipId: string) =>
+      request({
+        url: `/api/v1/trainee/relationships/${relationshipId}/accept`,
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.currentCoach }),
+        qc.invalidateQueries({ queryKey: keys.coachInvitations }),
+      ]);
+    },
+  });
+};
+export const useRejectCoachInvitation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (relationshipId: string) =>
+      request({
+        url: `/api/v1/trainee/relationships/${relationshipId}/reject`,
+        method: "POST",
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.coachInvitations }),
   });
 };
 export const useDetachCoach = () => {

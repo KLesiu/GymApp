@@ -5,14 +5,21 @@ import {
   useCreateWorkout,
   useExercises,
   useGyms,
+  useLastScores,
   useWorkouts,
 } from "@/api/domain";
-import { EmptyState, ErrorState, Screen, Text } from "@/components/primitives";
+import {
+  BenchmarkCard,
+  EmptyState,
+  ErrorState,
+  Screen,
+  Text,
+} from "@/components/primitives";
 import { formatDate } from "@/i18n";
 import { theme } from "@/theme/tokens";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 
 type SetupStep = "gym" | "day";
 
@@ -139,22 +146,44 @@ export default function WorkoutSetup() {
             <Text tone="muted">Active plan: {activePlan.data.name}</Text>
           ) : null}
           {activePlan.data?.days.length ? (
-            activePlan.data.days.map((day) => (
-              <Pressable
+            activePlan.data.days.map((day) => {
+              const firstExercise = day.exercises[0];
+              const exercise = exercises.data?.find(
+                (item) => item._id === firstExercise?.exerciseId,
+              );
+              return (
+                <Pressable
                 accessibilityRole="button"
                 disabled={create.isPending || exercises.isLoading}
                 key={day._id}
                 onPress={() => void startPlanDay(day)}
                 style={styles.choiceCard}
               >
-                <Text variant="heading1" style={styles.cardTitle}>
-                  {day.name}
-                </Text>
-                <Text style={styles.cardSubtitle}>
-                  {day.exercises.length} exercise(s)
-                </Text>
-              </Pressable>
-            ))
+                  <View style={styles.dayHeader}>
+                    <View>
+                      <Text variant="heading1" style={styles.cardTitle}>
+                        {day.name}
+                      </Text>
+                      <Text style={styles.cardSubtitle}>
+                        Week {day.weekNumber ?? 1} · {day.exercises.length} exercise(s)
+                      </Text>
+                    </View>
+                    <Text variant="caption" tone="muted">
+                      Tap to start
+                    </Text>
+                  </View>
+                  {selectedGym && firstExercise ? (
+                    <SameGymBenchmarkPreview
+                      exerciseId={firstExercise.exerciseId}
+                      exerciseName={exercise?.name}
+                      gymId={selectedGym._id}
+                      gymName={selectedGym.name}
+                      series={1}
+                    />
+                  ) : null}
+                </Pressable>
+              );
+            })
           ) : (
             <EmptyState
               title={
@@ -207,9 +236,60 @@ const GymCard = ({
   </Pressable>
 );
 
+const SameGymBenchmarkPreview = ({
+  exerciseId,
+  exerciseName,
+  gymId,
+  gymName,
+  series,
+}: {
+  readonly exerciseId: string;
+  readonly exerciseName?: string | undefined;
+  readonly gymId: string;
+  readonly gymName: string;
+  readonly series: number;
+}) => {
+  const { data, isPending, mutate } = useLastScores();
+
+  useEffect(() => {
+    mutate({
+      exerciseId,
+      ...(exerciseName ? { exerciseName } : {}),
+      gymId,
+      series,
+    });
+  }, [exerciseId, exerciseName, gymId, mutate, series]);
+
+  if (isPending) {
+    return <Text tone="muted">Loading same-gym benchmark...</Text>;
+  }
+
+  const benchmark = data?.find((score) => score.series === series);
+
+  return (
+    <BenchmarkCard
+      gymName={benchmark?.gymName ?? gymName}
+      previousDate={
+        benchmark?.completedAt ?? benchmark?.date
+          ? formatDate(benchmark.completedAt ?? benchmark.date ?? "")
+          : undefined
+      }
+      weight={benchmark?.weight}
+      reps={benchmark?.reps}
+      series={series}
+    />
+  );
+};
+
 const styles = StyleSheet.create({
   screen: {
     gap: theme.space.lg,
+  },
+  dayHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space.md,
   },
   title: {
     marginBottom: theme.space.xs,
