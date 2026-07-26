@@ -1,0 +1,102 @@
+name: LiftContext CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: liftcontext_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d liftcontext_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: express-api
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/liftcontext_ci?schema=public
+      JWT_SECRET: ci-secret-123456789
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: express-api/package-lock.json
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run prisma:migrate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run generate:api
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx expo-doctor
+      - run: npm run export:android
+
+  coach:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: liftcontext-coach
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: liftcontext-coach/package-lock.json
+      - run: npm ci
+      - run: npm run generate:api
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: mobile
+        run: npm ci
+      - working-directory: mobile
+        run: npm run generate:api
+      - working-directory: liftcontext-coach
+        run: npm ci
+      - working-directory: liftcontext-coach
+        run: npm run generate:api
+      - run: git diff --exit-code

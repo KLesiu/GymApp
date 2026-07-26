@@ -1,10 +1,10 @@
-# LGYM Express API Reference / Dokumentacja API
+# LiftContext Express API Reference / Dokumentacja API
 
 ## Polski
 
 ### 1. Cel systemu
 
-LGYM Express API to backend do zarzadzania treningami, planami, pomiarami ciala, relacja trener-podopieczny, raportami okresowymi oraz rankingiem Elo. Projekt jest modularnym monolitem opartym o Express, TypeScript, Prisma i PostgreSQL.
+LiftContext Express API to backend do zarzadzania treningami, planami, pomiarami ciala, relacja trener-podopieczny, raportami okresowymi oraz rankingiem LiftContext Rating inspirowanym Elo. Projekt jest modularnym monolitem opartym o Express, TypeScript, Prisma i PostgreSQL.
 
 ### 2. Stack technologiczny
 
@@ -242,7 +242,7 @@ Typowy test w Swaggerze:
 
 ### 1. System purpose
 
-LGYM Express API is a backend for workouts, training plans, body measurements, trainer-trainee relationships, recurring reports, and Elo ranking. The project is a modular monolith built with Express, TypeScript, Prisma, and PostgreSQL.
+LiftContext Express API is a backend for workouts, training plans, body measurements, trainer-trainee relationships, recurring reports, and LiftContext Rating inspired by Elo. The project is a modular monolith built with Express, TypeScript, Prisma, and PostgreSQL.
 
 ### 2. Technology stack
 

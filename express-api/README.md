@@ -1,6 +1,6 @@
-# Gym API
+# LiftContext Express API
 
-Gym management API built with Express, TypeScript, Prisma, PostgreSQL, Passport JWT, Zod, Swagger, Docker, and Vitest/Supertest.
+LiftContext API built with Express, TypeScript, Prisma, PostgreSQL, Passport JWT, Zod, Swagger, Docker, and Vitest/Supertest.
 
 ## Included domains
 
@@ -9,9 +9,9 @@ Gym management API built with Express, TypeScript, Prisma, PostgreSQL, Passport 
 - workout sessions/sets/history/contextual benchmark
 - body measurements/trends
 - custom muscle groups/exercises/plans
-- trainer-trainee relationship
+- trainer-trainee relationship with public connection codes
 - report templates/assignments/submissions/feedback/recurrence
-- Elo ranking/history
+- LiftContext Rating history/ranking inspired by Elo
 
 ## Tech stack
 
@@ -23,7 +23,7 @@ Gym management API built with Express, TypeScript, Prisma, PostgreSQL, Passport 
 - `argon2`
 - Zod
 - Swagger UI
-- Vitest + Supertest + Testcontainers
+- Vitest + Supertest against a real PostgreSQL container started through Docker CLI
 
 ## Quick start
 
