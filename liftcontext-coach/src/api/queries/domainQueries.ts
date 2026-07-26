@@ -25,7 +25,7 @@ export const useTraineeBundle = (traineeId: MaybeRefOrGetter<string>) => {
   return { trainee, trainees, elo, eloChart, measurements, workouts, reports }
 }
 
-export const useInviteRelationship = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeId: string) => apiFetch.post('/api/v1/trainer/relationships', { traineeId }), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.trainees() }) }) }
+export const useInviteRelationship = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeCode: string) => apiFetch.post('/api/v1/trainer/relationships', { traineeCode }), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.trainees() }) }) }
 export const useUnlinkTrainee = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (traineeId: string) => apiFetch.post(`/api/v1/trainer/trainees/${traineeId}/unlink`), onSuccess: (_data, traineeId) => { qc.removeQueries({ queryKey: queryKeys.trainee(traineeId) }); qc.invalidateQueries({ queryKey: queryKeys.trainees() }) } }) }
 export const useCreatePlan = () => { const qc = useQueryClient(); return useMutation({ mutationFn: (body: unknown) => apiFetch.post('/api/v1/plans', body), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.plans() }) }) }
 export const useAssignPlan = () => useMutation({ mutationFn: ({ planId, traineeId }: { planId: string; traineeId: string }) => apiFetch.post(`/api/v1/plans/${planId}/assignments`, { traineeId }) })

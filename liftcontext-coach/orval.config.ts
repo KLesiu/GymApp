@@ -2,7 +2,7 @@ import { defineConfig } from 'orval'
 
 export default defineConfig({
   liftContextCoachApi: {
-    input: { target: process.env.ORVAL_OPENAPI_URL ?? 'http://localhost:3000/openapi.json' },
+    input: { target: process.env.ORVAL_OPENAPI_URL ?? '../mobile/src/api/generated/openapi.json' },
     output: {
       mode: 'split',
       target: 'src/api/generated/client.ts',

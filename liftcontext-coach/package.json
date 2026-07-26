@@ -11,7 +11,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "generate:api": "orval --config orval.config.ts",
+    "generate:api": "npm --prefix ../mobile run generate:api && orval --config orval.config.ts",
     "audit:legacy": "node scripts/audit-legacy.mjs"
   },
   "dependencies": {
