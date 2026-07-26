@@ -1,12 +1,11 @@
 import { z } from "zod"
 
 export const relationshipSchema = z.object({
-  traineeCode: z
+  traineeEmail: z
     .string()
     .trim()
-    .min(8)
-    .max(12)
-    .transform((value) => value.toUpperCase()),
+    .email()
+    .transform((value) => value.toLowerCase()),
 })
 
 export const relationshipParamsSchema = z.object({ relationshipId: z.string().uuid() })

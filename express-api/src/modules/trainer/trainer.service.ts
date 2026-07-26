@@ -4,8 +4,8 @@ import type { TrainerRepository } from "./trainer.repository"
 export class TrainerService {
   constructor(private readonly repository: TrainerRepository) {}
 
-  async invite(trainerId: string, traineeCode: string) {
-    const trainee = await this.repository.findUserByConnectionCode(traineeCode.toUpperCase())
+  async invite(trainerId: string, traineeEmail: string) {
+    const trainee = await this.repository.findUserByEmail(traineeEmail.toLowerCase())
     if (!trainee) {
       throw new NotFoundError("TRAINEE_NOT_FOUND")
     }
@@ -62,6 +62,21 @@ export class TrainerService {
         _id: item.trainer.id,
         name: item.trainer.name,
       },
+    }))
+  }
+
+  async listInvitations(trainerId: string) {
+    const items = await this.repository.listForTrainer(trainerId)
+    return items.map((item) => ({
+      id: item.id,
+      _id: item.id,
+      traineeId: item.traineeId,
+      traineeName: item.trainee.name,
+      traineeEmail: item.trainee.email,
+      status: item.status,
+      createdAt: item.createdAt,
+      activatedAt: item.activatedAt,
+      detachedAt: item.detachedAt,
     }))
   }
 

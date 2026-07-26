@@ -32,7 +32,16 @@ export const buildTrainerRouter = (prisma: PrismaClient) => {
     validate({ body: relationshipSchema }),
     async (request, response) => {
       const body = relationshipSchema.parse(request.body)
-      response.status(201).json(await service.invite(getActorId(request), body.traineeCode))
+      response.status(201).json(await service.invite(getActorId(request), body.traineeEmail))
+    },
+  )
+
+  router.get(
+    "/trainer/relationships",
+    requireAuth,
+    requireRole("TRAINER"),
+    async (request, response) => {
+      response.json(await service.listInvitations(getActorId(request)))
     },
   )
 

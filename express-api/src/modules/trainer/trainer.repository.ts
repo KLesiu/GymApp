@@ -11,9 +11,9 @@ export class TrainerRepository {
     })
   }
 
-  async findUserByConnectionCode(connectionCode: string) {
+  async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({
-      where: { connectionCode },
+      where: { email },
       include: { roles: true },
     })
   }
@@ -54,6 +54,14 @@ export class TrainerRepository {
       where: { traineeId, status: "PENDING" },
       include: { trainer: true },
       orderBy: { createdAt: "asc" },
+    })
+  }
+
+  async listForTrainer(trainerId: string) {
+    return this.prisma.trainerRelationship.findMany({
+      where: { trainerId },
+      include: { trainee: true },
+      orderBy: { createdAt: "desc" },
     })
   }
 
