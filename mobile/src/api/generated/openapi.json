@@ -2449,6 +2449,32 @@
         }
       }
     },
+    "/api/v1/trainer/trainees/{traineeId}/active-plan": {
+      "get": {
+        "summary": "Get trainee active plan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "traineeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/trainer/trainees/{traineeId}/unlink": {
       "post": {
         "summary": "Unlink trainee",

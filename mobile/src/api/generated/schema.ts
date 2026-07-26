@@ -1686,6 +1686,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trainer/trainees/{traineeId}/active-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get trainee active plan */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    traineeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/trainer/trainees/{traineeId}/unlink": {
         parameters: {
             query?: never;
