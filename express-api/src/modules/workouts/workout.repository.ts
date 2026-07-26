@@ -29,7 +29,13 @@ export class WorkoutRepository {
     },
   ) {
     return this.prisma.$transaction(async (transaction) => {
-      await this.assertAvailableExercises(transaction, userId, input.sets)
+      const activePlanExerciseIds = await this.findActivePlanDayExerciseIds(
+        transaction,
+        userId,
+        input.planId,
+        input.planDayId,
+      )
+      await this.assertAvailableExercises(transaction, userId, input.sets, activePlanExerciseIds)
 
       return transaction.workoutSession.create({
         data: {
@@ -462,6 +468,32 @@ export class WorkoutRepository {
     if (allowedExercises.length !== exerciseIds.length) {
       throw new ValidationAppError("EXERCISE_NOT_FOUND")
     }
+  }
+
+  private async findActivePlanDayExerciseIds(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    planId?: string,
+    planDayId?: string,
+  ) {
+    if (!planId || !planDayId) {
+      return new Set<string>()
+    }
+
+    const activeAssignment = await transaction.planAssignment.findFirst({
+      where: { planId, traineeId: userId, isActive: true },
+      select: { id: true },
+    })
+    if (!activeAssignment) {
+      return new Set<string>()
+    }
+
+    const planDay = await transaction.planDay.findFirst({
+      where: { id: planDayId, planId },
+      include: { exercises: true },
+    })
+
+    return new Set(planDay?.exercises.map((exercise) => exercise.exerciseId) ?? [])
   }
 
   private async lockWorkout(transaction: Prisma.TransactionClient, workoutId: string) {
