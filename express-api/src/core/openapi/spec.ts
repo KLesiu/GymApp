@@ -179,6 +179,7 @@ export const openApiSpec = {
         required: ["name", "orderIndex", "exercises"],
         properties: {
           name: { type: "string", example: "Push day" },
+          weekNumber: { type: "integer", minimum: 1, default: 1, example: 1 },
           orderIndex: { type: "integer", minimum: 0, example: 0 },
           exercises: { type: "array", items: schemaRef("PlanExerciseRequest") },
         },
@@ -189,6 +190,7 @@ export const openApiSpec = {
         properties: {
           name: { type: "string", example: "Starter plan" },
           description: { type: "string", example: "Simple training plan" },
+          weeksCount: { type: "integer", minimum: 1, default: 1, example: 2 },
           days: { type: "array", items: schemaRef("PlanDayRequest") },
         },
       },
@@ -198,6 +200,7 @@ export const openApiSpec = {
         properties: {
           name: { type: "string", example: "Updated plan" },
           description: { type: "string", example: "Updated description" },
+          weeksCount: { type: "integer", minimum: 1, example: 2 },
         },
       },
       SetActivePlanRequest: {
@@ -290,8 +293,10 @@ export const openApiSpec = {
       },
       RelationshipRequest: {
         type: "object",
-        required: ["traineeId"],
-        properties: { traineeId: uuidSchema },
+        required: ["traineeCode"],
+        properties: {
+          traineeCode: { type: "string", minLength: 8, maxLength: 12, example: "80A48224E947" },
+        },
       },
       ReportFieldRequest: {
         type: "object",
@@ -303,6 +308,54 @@ export const openApiSpec = {
           isRequired: { type: "boolean", example: true },
           order: { type: "integer", minimum: 0, example: 0 },
           moduleConfig: { type: "object", additionalProperties: true },
+        },
+      },
+      ReportSubmissionResponse: {
+        type: "object",
+        required: [
+          "id",
+          "traineeId",
+          "assignmentId",
+          "templateName",
+          "templateVersion",
+          "answers",
+          "submittedAt",
+        ],
+        properties: {
+          id: uuidSchema,
+          traineeId: uuidSchema,
+          traineeName: { type: "string", example: "seed-trainee" },
+          assignmentId: uuidSchema,
+          templateName: { type: "string", example: "Weekly check-in" },
+          template: {
+            type: "object",
+            required: ["id", "name"],
+            properties: { id: uuidSchema, name: { type: "string", example: "Weekly check-in" } },
+          },
+          templateVersion: {
+            type: "object",
+            required: ["id", "version", "snapshot"],
+            properties: {
+              id: uuidSchema,
+              version: { type: "integer", minimum: 1, example: 2 },
+              snapshot: {
+                type: "object",
+                required: ["fields"],
+                properties: { fields: { type: "array", items: schemaRef("ReportFieldRequest") } },
+                additionalProperties: true,
+              },
+            },
+          },
+          answers: { type: "object", additionalProperties: true, example: { mood: "good" } },
+          submittedAt: dateTimeSchema,
+          feedback: {
+            type: "object",
+            properties: {
+              overallComment: { type: "string", nullable: true },
+              fieldComments: { type: "object", additionalProperties: true, nullable: true },
+              readAt: { ...dateTimeSchema, nullable: true },
+            },
+          },
         },
       },
       ReportTemplateRequest: {
@@ -718,6 +771,13 @@ export const openApiSpec = {
         responses: { "200": ok },
       },
     },
+    "/api/v1/trainee/relationships": {
+      get: {
+        summary: "List pending trainer invitations",
+        security: auth,
+        responses: { "200": ok },
+      },
+    },
     "/api/v1/trainee/trainer/detach": {
       post: { summary: "Detach current trainer", security: auth, responses: { "200": ok } },
     },
@@ -790,7 +850,16 @@ export const openApiSpec = {
         summary: "List report submissions",
         security: auth,
         parameters: [queryParam("traineeId", uuidSchema)],
-        responses: { "200": ok },
+        responses: {
+          "200": {
+            description: "Report submissions with frozen template versions",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: schemaRef("ReportSubmissionResponse") },
+              },
+            },
+          },
+        },
       },
     },
     "/api/v1/trainer/report-submissions/{submissionId}/feedback": {

@@ -165,7 +165,30 @@ export class ReportService {
     if (traineeId) {
       await this.accessService.assertSelfOrActiveTrainerRelationship(trainerId, traineeId)
     }
-    return this.repository.listSubmissionsForTrainer(trainerId, traineeId)
+    const submissions = await this.repository.listSubmissionsForTrainer(trainerId, traineeId)
+    return submissions.map((submission) => ({
+      id: submission.id,
+      traineeId: submission.traineeId,
+      traineeName: submission.assignment.trainee.name,
+      assignmentId: submission.assignmentId,
+      templateName: submission.assignment.template.name,
+      template: {
+        id: submission.assignment.template.id,
+        name: submission.assignment.template.name,
+      },
+      templateVersion: {
+        id: submission.assignment.templateVersion.id,
+        version: submission.assignment.templateVersion.version,
+        snapshot: submission.assignment.templateVersion.snapshotJson,
+      },
+      answers: submission.payloadJson,
+      submittedAt: submission.submittedAt,
+      feedback: {
+        overallComment: submission.trainerOverallComment,
+        fieldComments: submission.trainerFieldCommentsJson,
+        readAt: submission.feedbackReadAt,
+      },
+    }))
   }
 
   async submit(traineeId: string, assignmentId: string, answers: Record<string, unknown>) {

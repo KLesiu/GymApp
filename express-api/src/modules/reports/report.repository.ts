@@ -219,7 +219,9 @@ export class ReportRepository {
   async listSubmissionsForTrainer(trainerId: string, traineeId?: string) {
     return this.prisma.reportSubmission.findMany({
       where: { assignment: { trainerId, ...(traineeId ? { traineeId } : {}) } },
-      include: { assignment: { include: { template: true } } },
+      include: {
+        assignment: { include: { template: true, templateVersion: true, trainee: true } },
+      },
       orderBy: { submittedAt: "desc" },
     })
   }
