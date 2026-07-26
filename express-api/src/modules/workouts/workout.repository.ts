@@ -28,28 +28,35 @@ export class WorkoutRepository {
       }[]
     },
   ) {
-    return this.prisma.workoutSession.create({
-      data: {
-        userId,
-        gymId: input.gymId,
-        planId: input.planId ?? null,
-        planDayId: input.planDayId ?? null,
-        startedAt: new Date(input.startedAt),
-        sets: {
-          create: input.sets.map((set) => ({
-            exerciseId: set.exerciseId,
-            series: set.series,
-            reps: set.reps ?? null,
-            weight: set.weight ?? null,
-            unit: set.unit,
-          })),
+    return this.prisma.$transaction(async (transaction) => {
+      await this.assertAvailableExercises(transaction, userId, input.sets)
+
+      return transaction.workoutSession.create({
+        data: {
+          userId,
+          gymId: input.gymId,
+          planId: input.planId ?? null,
+          planDayId: input.planDayId ?? null,
+          startedAt: new Date(input.startedAt),
+          sets: {
+            create: input.sets.map((set) => ({
+              exerciseId: set.exerciseId,
+              series: set.series,
+              reps: set.reps ?? null,
+              weight: set.weight ?? null,
+              unit: set.unit,
+            })),
+          },
         },
-      },
-      include: {
-        gym: true,
-        planDay: true,
-        sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { series: "asc" }] },
-      },
+        include: {
+          gym: true,
+          planDay: true,
+          sets: {
+            include: { exercise: true },
+            orderBy: [{ exerciseId: "asc" }, { series: "asc" }],
+          },
+        },
+      })
     })
   }
 
@@ -414,18 +421,8 @@ export class WorkoutRepository {
       throw new ValidationAppError("WORKOUT_SET_NOT_FOUND")
     }
 
-    const exerciseIds = Array.from(new Set(sets.map((set) => set.exerciseId)))
     const draftExerciseIds = new Set(currentSets.map((set) => set.exerciseId))
-    const allowedExercises = await transaction.exercise.findMany({
-      where: {
-        id: { in: exerciseIds },
-        OR: [{ ownerId: userId }, { id: { in: Array.from(draftExerciseIds) } }],
-      },
-      select: { id: true },
-    })
-    if (allowedExercises.length !== exerciseIds.length) {
-      throw new ValidationAppError("EXERCISE_NOT_FOUND")
-    }
+    await this.assertAvailableExercises(transaction, userId, sets, draftExerciseIds)
 
     await transaction.workoutSet.deleteMany({
       where: { workoutSessionId: workoutId, id: { notIn: inputSetIds } },
@@ -446,6 +443,25 @@ export class WorkoutRepository {
           : transaction.workoutSet.create({ data: { ...data, workoutSessionId: workoutId } })
       }),
     )
+  }
+
+  private async assertAvailableExercises(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    sets: readonly { readonly exerciseId: string }[],
+    draftExerciseIds = new Set<string>(),
+  ) {
+    const exerciseIds = Array.from(new Set(sets.map((set) => set.exerciseId)))
+    const allowedExercises = await transaction.exercise.findMany({
+      where: {
+        id: { in: exerciseIds },
+        OR: [{ ownerId: userId }, { isGlobal: true }, { id: { in: Array.from(draftExerciseIds) } }],
+      },
+      select: { id: true },
+    })
+    if (allowedExercises.length !== exerciseIds.length) {
+      throw new ValidationAppError("EXERCISE_NOT_FOUND")
+    }
   }
 
   private async lockWorkout(transaction: Prisma.TransactionClient, workoutId: string) {

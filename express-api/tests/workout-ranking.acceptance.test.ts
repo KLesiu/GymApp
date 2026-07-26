@@ -147,6 +147,37 @@ describeAcceptance("workout ranking acceptance", (environment, register) => {
     expect(history.body[0].exercises.map((set: { series: number }) => set.series)).toEqual([1, 2])
   })
 
+  it("rejects private exercises owned by another user when creating a workout draft", async () => {
+    const owner = await register("foreign-exercise-owner", "foreign-exercise-owner@example.com")
+    const attacker = await register(
+      "foreign-exercise-attacker",
+      "foreign-exercise-attacker@example.com",
+    )
+    const exercise = await createExercise(
+      environment,
+      owner.token,
+      "Private Row",
+      "BACK",
+      "STANDARD",
+    )
+    const gym = await authRequest(environment.client.post("/api/v1/gyms"), attacker.token).send({
+      name: "Attacker Gym",
+      address: "Address",
+    })
+
+    const blocked = await authRequest(
+      environment.client.post("/api/v1/workouts"),
+      attacker.token,
+    ).send({
+      gymId: gym.body._id,
+      startedAt: new Date("2026-01-05T10:00:00.000Z").toISOString(),
+      sets: [{ exerciseId: exercise.body._id, series: 1, reps: 10, weight: 50, unit: "KILOGRAMS" }],
+    })
+
+    expect(blocked.status).toBe(400)
+    expect(blocked.body.error.code).toBe("EXERCISE_NOT_FOUND")
+  })
+
   it("paginates ranking", async () => {
     await register("rank-1", "rank-1@example.com")
     await register("rank-2", "rank-2@example.com")
