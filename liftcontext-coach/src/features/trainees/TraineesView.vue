@@ -10,6 +10,8 @@ import LcErrorState from '@/components/ui/LcErrorState.vue'
 import LcInput from '@/components/ui/LcInput.vue'
 import LcSkeleton from '@/components/ui/LcSkeleton.vue'
 
+const props = defineProps<{ initialTab?: 'invitations' | 'trainees' }>()
+
 const search = ref('')
 const traineeEmail = ref('')
 const statusFilter = ref('ALL')
@@ -19,6 +21,7 @@ const invitations = useTrainerInvitationsQuery()
 const invite = useInviteRelationship()
 
 const statuses = ['ALL', 'PENDING', 'ACTIVE', 'REJECTED', 'DETACHED'] as const
+const activeTab = computed(() => props.initialTab ?? 'invitations')
 const filteredTrainees = computed(() => (query.data.value ?? []).filter((trainee) => trainee.name.toLowerCase().includes(search.value.toLowerCase()) || trainee.email?.toLowerCase().includes(search.value.toLowerCase())))
 const filteredInvitations = computed(() => (invitations.data.value ?? []).filter((item) => {
   const matchesStatus = statusFilter.value === 'ALL' || item.status === statusFilter.value
@@ -47,7 +50,18 @@ const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('e
 
 <template>
   <section class="grid gap-6">
-    <div class="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="font-display text-xs font-bold uppercase tracking-[0.28em] text-contextDark">Coach relationships</p>
+        <h1 class="mt-2 font-display text-3xl font-bold text-ink">Invitations and trainees</h1>
+      </div>
+      <div class="flex rounded-full border border-border bg-surface p-1 shadow-sm">
+        <RouterLink to="/invitations" class="rounded-full px-5 py-2 text-sm font-bold transition" :class="activeTab === 'invitations' ? 'bg-contextDark text-white shadow-sm' : 'text-textMuted hover:text-contextDark'">Invitations</RouterLink>
+        <RouterLink to="/trainees" class="rounded-full px-5 py-2 text-sm font-bold transition" :class="activeTab === 'trainees' ? 'bg-contextDark text-white shadow-sm' : 'text-textMuted hover:text-contextDark'">Trainees</RouterLink>
+      </div>
+    </div>
+
+    <div v-if="activeTab === 'invitations'" class="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
       <div class="grid gap-6 border-b border-border bg-gradient-to-br from-surface via-canvas to-surfaceMuted p-6 lg:grid-cols-[1fr_auto] lg:items-start">
         <div>
           <p class="font-display text-xs font-bold uppercase tracking-[0.28em] text-contextDark">New invitation</p>
@@ -68,7 +82,7 @@ const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('e
       <p v-if="message" class="px-6 pb-5 text-sm font-semibold" :class="message.includes('created') ? 'text-success' : 'text-danger'">{{ message }}</p>
     </div>
 
-    <LcCard>
+    <LcCard v-if="activeTab === 'invitations'">
       <div class="grid gap-4">
         <div>
           <p class="font-display text-xs font-bold uppercase tracking-[0.28em] text-contextDark">Invitation history</p>
@@ -96,10 +110,37 @@ const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('e
       </div>
     </LcCard>
 
-    <div v-if="filteredTrainees.length" class="grid gap-3 md:grid-cols-2">
-      <RouterLink v-for="trainee in filteredTrainees" :key="trainee.id" :to="`/trainees/${trainee.id}`">
-        <LcCard><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-display text-xl font-bold">{{ trainee.name }}</h2><p class="text-sm text-textMuted">{{ trainee.email ?? trainee.id }}</p></div><div class="flex items-center gap-2"><LcBadge tone="success">{{ trainee.relationshipStatus }}</LcBadge><span class="font-display font-bold">Elo {{ trainee.elo ?? '—' }}</span></div></div></LcCard>
-      </RouterLink>
-    </div>
+    <LcCard v-else>
+      <div class="grid gap-4">
+        <div class="grid gap-4 lg:grid-cols-[1fr_minmax(280px,420px)] lg:items-end">
+          <div>
+            <p class="font-display text-xs font-bold uppercase tracking-[0.28em] text-contextDark">Accepted relationships</p>
+            <h2 class="mt-2 font-display text-2xl font-bold">Active trainees</h2>
+            <p class="mt-2 text-sm text-textMuted">People who accepted your invitation and currently have an active coaching relationship.</p>
+          </div>
+          <LcInput v-model="search" label="Search by email or name" />
+        </div>
+
+        <LcSkeleton v-if="query.isLoading.value" />
+        <LcErrorState v-else-if="query.isError.value" @retry="query.refetch" />
+        <div v-else-if="filteredTrainees.length" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <RouterLink v-for="trainee in filteredTrainees" :key="trainee.id" :to="`/trainees/${trainee.id}`" class="group">
+            <div class="h-full rounded-xl border border-border bg-surface p-5 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-contextDark group-hover:shadow-card">
+              <div class="flex h-full flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-display text-xl font-bold text-ink">{{ trainee.name }}</h3>
+                  <p class="text-sm text-textMuted">{{ trainee.email ?? trainee.id }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <LcBadge tone="success">{{ trainee.relationshipStatus ?? 'ACTIVE' }}</LcBadge>
+                  <span class="font-display font-bold text-contextDark">Elo {{ trainee.elo ?? '—' }}</span>
+                </div>
+              </div>
+            </div>
+          </RouterLink>
+        </div>
+        <LcEmptyState v-else title="No active trainees" description="Accepted trainee relationships will appear here after an invitation is approved." />
+      </div>
+    </LcCard>
   </section>
 </template>
