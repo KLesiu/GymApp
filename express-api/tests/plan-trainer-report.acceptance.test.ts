@@ -76,6 +76,35 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
     expect(deleted.body.msg).toBe("DELETED")
   })
 
+  it("exposes global starter exercises for new user plans", async () => {
+    const user = await register("starter-exercises-user", "starter-exercises-user@example.com")
+    const exercises = await authRequest(environment.client.get("/api/v1/exercises"), user.token)
+
+    expect(exercises.status).toBe(200)
+    expect(
+      exercises.body.filter((exercise: { isGlobal?: boolean }) => exercise.isGlobal),
+    ).toHaveLength(50)
+
+    const globalExercise = (exercises.body as { _id: string; isGlobal?: boolean }[])[0]
+    if (!globalExercise) {
+      throw new Error("Expected at least one global starter exercise")
+    }
+    const plan = await authRequest(environment.client.post("/api/v1/plans"), user.token).send({
+      name: "Starter Global Plan",
+      days: [
+        {
+          name: "Global Day",
+          orderIndex: 0,
+          exercises: [{ exerciseId: globalExercise._id, series: 3, repsTarget: 10, orderIndex: 0 }],
+        },
+      ],
+    })
+
+    expect(globalExercise.isGlobal).toBe(true)
+    expect(plan.status).toBe(201)
+    expect(plan.body.days[0].exercises[0].exerciseId).toBe(globalExercise._id)
+  })
+
   it("blocks trainer access without active relationship", async () => {
     const trainer = await register("trainer-block", "trainer-block@example.com", ["TRAINER"])
     const trainee = await register("trainee-block", "trainee-block@example.com")
@@ -93,8 +122,18 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
     const relationship = await createRelationship(
       environment,
       trainer.token,
-      trainee.connectionCode,
+      `  ${trainee.email.toUpperCase()}  `,
     )
+    const invitations = await authRequest(
+      environment.client.get("/api/v1/trainer/relationships"),
+      trainer.token,
+    )
+
+    expect(relationship.status).toBe(201)
+    expect(invitations.body[0]).toMatchObject({
+      traineeEmail: trainee.email,
+      status: "PENDING",
+    })
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -133,14 +172,27 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
     expect(resurrectDetached.status).toBe(409)
   })
 
-  it("does not allow rejected relationships to be accepted later", async () => {
-    const trainer = await register("trainer-rejected", "trainer-rejected@example.com", ["TRAINER"])
-    const trainee = await register("trainee-rejected", "trainee-rejected@example.com")
+  it("allows trainers to invite trainees registered with mixed-case email", async () => {
+    const trainer = await register("trainer-mixed-email", "trainer-mixed-email@example.com", [
+      "TRAINER",
+    ])
+    const trainee = await register("trainee-mixed-email", "Trainee.Mixed.Email@Example.com")
+
     const relationship = await createRelationship(
       environment,
       trainer.token,
-      trainee.connectionCode,
+      "trainee.mixed.email@example.com",
     )
+
+    expect(trainee.email).toBe("trainee.mixed.email@example.com")
+    expect(relationship.status).toBe(201)
+    expect(relationship.body.traineeId).toBe(trainee.userId)
+  })
+
+  it("does not allow rejected relationships to be accepted later", async () => {
+    const trainer = await register("trainer-rejected", "trainer-rejected@example.com", ["TRAINER"])
+    const trainee = await register("trainee-rejected", "trainee-rejected@example.com")
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
 
     const rejected = await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/reject`),
@@ -159,11 +211,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
     const owner = await register("trainer-owner", "trainer-owner@example.com", ["TRAINER"])
     const attacker = await register("trainer-attacker", "trainer-attacker@example.com", ["TRAINER"])
     const trainee = await register("trainee-foreign-plan", "trainee-foreign-plan@example.com")
-    const relationship = await createRelationship(
-      environment,
-      attacker.token,
-      trainee.connectionCode,
-    )
+    const relationship = await createRelationship(environment, attacker.token, trainee.email)
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -198,11 +246,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
   it("rejects report submission when answer type does not match frozen template version", async () => {
     const trainer = await register("trainer-report", "trainer-report@example.com", ["TRAINER"])
     const trainee = await register("trainee-report", "trainee-report@example.com")
-    const relationship = await createRelationship(
-      environment,
-      trainer.token,
-      trainee.connectionCode,
-    )
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -248,11 +292,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
       "trainee-foreign-template",
       "trainee-foreign-template@example.com",
     )
-    const relationship = await createRelationship(
-      environment,
-      attacker.token,
-      trainee.connectionCode,
-    )
+    const relationship = await createRelationship(environment, attacker.token, trainee.email)
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -273,11 +313,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
       "TRAINER",
     ])
     const trainee = await register("feedback-trainee", "feedback-trainee@example.com")
-    const relationship = await createRelationship(
-      environment,
-      trainer.token,
-      trainee.connectionCode,
-    )
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -312,11 +348,7 @@ describeAcceptance("plan trainer report acceptance", (environment, register) => 
   it("supports report template list update delete and recurring lifecycle", async () => {
     const trainer = await register("report-crud", "report-crud@example.com", ["TRAINER"])
     const trainee = await register("report-crud-trainee", "report-crud-trainee@example.com")
-    const relationship = await createRelationship(
-      environment,
-      trainer.token,
-      trainee.connectionCode,
-    )
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
     await authRequest(
       environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
       trainee.token,
@@ -437,10 +469,10 @@ const createExercise = async (
 const createRelationship = async (
   environment: Parameters<Parameters<typeof describeAcceptance>[1]>[0],
   trainerToken: string,
-  traineeCode: string,
+  traineeEmail: string,
 ) =>
   authRequest(environment.client.post("/api/v1/trainer/relationships"), trainerToken).send({
-    traineeCode,
+    traineeEmail,
   })
 
 const createScaleTemplate = async (
