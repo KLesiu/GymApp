@@ -17,15 +17,15 @@ const pendingReports = computed(() => submissions.data.value?.length ?? undefine
     <div>
       <p class="text-sm font-bold uppercase text-contextDark">LiftContext Coach</p>
       <h1 class="font-display text-3xl font-bold">Start</h1>
-      <p class="mt-2 text-textMuted">The dashboard shows only metrics available from the current API.</p>
+      <p class="mt-2 text-textMuted">A quick overview of active coaching work and recent trainee activity.</p>
     </div>
-    <LcErrorState v-if="trainees.isError.value" @retry="trainees.refetch()" />
+    <LcErrorState v-if="trainees.isError.value || submissions.isError.value" @retry="() => { trainees.refetch(); submissions.refetch() }" />
     <div v-else-if="trainees.isLoading.value" class="grid gap-4 md:grid-cols-3"><LcSkeleton /><LcSkeleton /><LcSkeleton /></div>
     <div v-else class="grid gap-4 md:grid-cols-3">
-      <LcMetric label="Active trainees" :value="activeCount" hint="Trainer relationships from the API" />
-      <LcMetric label="Submitted reports" :value="pendingReports ?? 'Unavailable'" :unavailable="pendingReports === undefined" hint="The endpoint does not distinguish pending reports" />
-      <LcMetric label="Recent workouts" value="Unavailable" unavailable hint="No coach endpoint exposes trainee workout lists" />
+      <LcMetric label="Active trainees" :value="activeCount" hint="Accepted coaching relationships" />
+      <LcMetric label="Submitted reports" :value="pendingReports ?? '—'" :unavailable="pendingReports === undefined" hint="Reports ready for review" />
+      <LcMetric label="Recent workouts" value="—" unavailable hint="Open a trainee profile to review workout history" />
     </div>
-    <LcCard><h2 class="font-display text-xl font-bold">Security rule</h2><p class="mt-2 text-textMuted">Trainee data is cached under keys that include the trainee ID. The API remains the authorization boundary for coach–trainee relationships.</p></LcCard>
+    <LcCard><h2 class="font-display text-xl font-bold">Coaching workspace</h2><p class="mt-2 text-textMuted">Use the side navigation to manage invitations, trainees, plans, reports, and exercise libraries from one place.</p></LcCard>
   </section>
 </template>
