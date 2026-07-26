@@ -117,6 +117,32 @@
           }
         }
       },
+      "MuscleGroupResponse": {
+        "type": "object",
+        "required": [
+          "_id",
+          "name",
+          "region",
+          "isGlobal"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Chest"
+          },
+          "region": {
+            "type": "string"
+          },
+          "isGlobal": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
       "ExerciseRequest": {
         "type": "object",
         "required": [
@@ -156,6 +182,58 @@
               "PULLUP_INVERSE"
             ],
             "default": "STANDARD"
+          }
+        }
+      },
+      "ExerciseResponse": {
+        "type": "object",
+        "required": [
+          "_id",
+          "name",
+          "bodyPart",
+          "formula",
+          "isGlobal",
+          "muscleGroup"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bench press"
+          },
+          "bodyPart": {
+            "type": "string",
+            "enum": [
+              "CHEST",
+              "BACK",
+              "SHOULDERS",
+              "BICEPS",
+              "TRICEPS",
+              "QUADS",
+              "HAMSTRINGS",
+              "GLUTES",
+              "CORE",
+              "CALVES"
+            ]
+          },
+          "formula": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "STRENGTH",
+              "VOLUME",
+              "PULLUP_INVERSE"
+            ]
+          },
+          "isGlobal": {
+            "type": "boolean",
+            "example": false
+          },
+          "muscleGroup": {
+            "$ref": "#/components/schemas/MuscleGroupResponse"
           }
         }
       },
@@ -589,14 +667,71 @@
       "RelationshipRequest": {
         "type": "object",
         "required": [
-          "traineeCode"
+          "traineeEmail"
         ],
         "properties": {
-          "traineeCode": {
+          "traineeEmail": {
             "type": "string",
-            "minLength": 8,
-            "maxLength": 12,
-            "example": "80A48224E947"
+            "format": "email",
+            "example": "trainee@example.com"
+          }
+        }
+      },
+      "TrainerInvitationResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "_id",
+          "traineeId",
+          "traineeName",
+          "traineeEmail",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "traineeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "traineeName": {
+            "type": "string",
+            "example": "seed-trainee"
+          },
+          "traineeEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "trainee@example.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "REJECTED",
+              "DETACHED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "detachedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -1155,7 +1290,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Muscle groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MuscleGroupResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -1193,7 +1338,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Exercises",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -1241,7 +1396,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Exercise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1267,7 +1429,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Trainer invitations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrainerInvitationResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -2128,6 +2300,19 @@
       }
     },
     "/api/v1/trainer/relationships": {
+      "get": {
+        "summary": "List trainer invitations",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "post": {
         "summary": "Create trainer-trainee relationship",
         "security": [

@@ -339,12 +339,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Muscle groups */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["MuscleGroupResponse"][];
+                    };
                 };
             };
         };
@@ -395,12 +397,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Exercises */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ExerciseResponse"][];
+                    };
                 };
             };
         };
@@ -457,12 +461,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
+                /** @description Exercise */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ExerciseResponse"];
+                    };
                 };
             };
         };
@@ -491,12 +497,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Trainer invitations */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["TrainerInvitationResponse"][];
+                    };
                 };
             };
         };
@@ -1421,7 +1429,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List trainer invitations */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         put?: never;
         /** Create trainer-trainee relationship */
         post: {
@@ -2356,6 +2382,15 @@ export interface components {
             /** @enum {string} */
             region: "CHEST" | "BACK" | "SHOULDERS" | "BICEPS" | "TRICEPS" | "QUADS" | "HAMSTRINGS" | "GLUTES" | "CORE" | "CALVES" | "CUSTOM";
         };
+        MuscleGroupResponse: {
+            /** Format: uuid */
+            _id: string;
+            /** @example Chest */
+            name: string;
+            region: string;
+            /** @example false */
+            isGlobal: boolean;
+        };
         ExerciseRequest: {
             /** @example Bench press */
             name: string;
@@ -2368,6 +2403,19 @@ export interface components {
              * @enum {string}
              */
             formula: "STANDARD" | "STRENGTH" | "VOLUME" | "PULLUP_INVERSE";
+        };
+        ExerciseResponse: {
+            /** Format: uuid */
+            _id: string;
+            /** @example Bench press */
+            name: string;
+            /** @enum {string} */
+            bodyPart: "CHEST" | "BACK" | "SHOULDERS" | "BICEPS" | "TRICEPS" | "QUADS" | "HAMSTRINGS" | "GLUTES" | "CORE" | "CALVES";
+            /** @enum {string} */
+            formula: "STANDARD" | "STRENGTH" | "VOLUME" | "PULLUP_INVERSE";
+            /** @example false */
+            isGlobal: boolean;
+            muscleGroup: components["schemas"]["MuscleGroupResponse"];
         };
         UpdateExerciseRequest: {
             /** @example Bench press */
@@ -2511,8 +2559,34 @@ export interface components {
             takenAt: string;
         };
         RelationshipRequest: {
-            /** @example 80A48224E947 */
-            traineeCode: string;
+            /**
+             * Format: email
+             * @example trainee@example.com
+             */
+            traineeEmail: string;
+        };
+        TrainerInvitationResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            _id: string;
+            /** Format: uuid */
+            traineeId: string;
+            /** @example seed-trainee */
+            traineeName: string;
+            /**
+             * Format: email
+             * @example trainee@example.com
+             */
+            traineeEmail: string;
+            /** @enum {string} */
+            status: "PENDING" | "ACTIVE" | "REJECTED" | "DETACHED";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            activatedAt?: string | null;
+            /** Format: date-time */
+            detachedAt?: string | null;
         };
         ReportFieldRequest: {
             /** @example mood */
