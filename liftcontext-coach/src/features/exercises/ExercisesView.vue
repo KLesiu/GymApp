@@ -54,7 +54,6 @@ const globalCount = computed(() => (exercises.data.value ?? []).filter((item) =>
           </div>
           <LcBadge :tone="field(exercise, 'isGlobal') === 'true' ? 'success' : 'neutral'">{{ field(exercise, 'isGlobal') === 'true' ? 'global' : 'custom' }}</LcBadge>
         </div>
-        <div class="mt-4 rounded-lg bg-surfaceMuted px-3 py-2 text-sm font-semibold text-textMuted">Formula: {{ field(exercise, 'formula') }}</div>
       </LcCard>
     </div>
   </section>
