@@ -1,6 +1,6 @@
 # API compatibility
 
-| Use case | Reference flow | New OpenAPI endpoint | Request / response | Error handling | Cache / invalidation | Status |
+| Use case | App flow | OpenAPI endpoint | Request / response | Error handling | Cache / invalidation | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | Register/login/session | Auth flow | `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me` | register/login DTOs, JWT response | 401 clears session; 403 does not | `auth/me` | Implemented |
 | Gyms CRUD | Gym context | `GET/POST /api/v1/gyms`, `GET/PATCH/DELETE /api/v1/gyms/{gymId}` | `GymRequest`, gym DTOs with `_id` | envelope mapped safely | `gyms` | Implemented shell |

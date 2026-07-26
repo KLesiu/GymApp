@@ -11,7 +11,7 @@ LiftContext API built with Express, TypeScript, Prisma, PostgreSQL, Passport JWT
 - custom muscle groups/exercises/plans
 - trainer-trainee relationship invitations by trainee email
 - report templates/assignments/submissions/feedback/recurrence
-- LiftContext Rating history/ranking inspired by Elo
+- LiftContext Rating history and ranking
 
 ## Tech stack
 
