@@ -68,9 +68,9 @@ export default function Coach() {
     <Screen>
       <TrainingHeader title="Coach" name={me.data?.name ?? "Athlete"} />
       <Card>
-        <Text variant="subtitle">Your connection code</Text>
-        <Text>{me.data?.connectionCode ?? "Unavailable"}</Text>
-        <Text tone="muted">Share this code with a trainer to receive an invitation.</Text>
+        <Text variant="subtitle">Coach invitations</Text>
+        <Text>{me.data?.email ?? "Your account email"}</Text>
+        <Text tone="muted">A trainer can invite you by using the email assigned to this account.</Text>
       </Card>
       {coach ? (
         <>

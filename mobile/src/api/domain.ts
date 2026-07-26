@@ -624,11 +624,11 @@ export const useCreateMeasurement = () => {
 export const useConnectCoach = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (traineeCode: string) =>
+    mutationFn: (traineeEmail: string) =>
       request({
         url: "/api/v1/trainer/relationships",
         method: "POST",
-        data: { traineeCode },
+        data: { traineeEmail },
       }),
     onSuccess: async () => {
       await Promise.all([
