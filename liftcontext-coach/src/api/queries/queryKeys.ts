@@ -8,6 +8,7 @@ export const queryKeys = {
   traineeMeasurements: (traineeId: string) => ['trainees', traineeId, 'measurements'] as const,
   traineeWorkouts: (traineeId: string) => ['trainees', traineeId, 'workouts'] as const,
   traineeReports: (traineeId: string) => ['trainees', traineeId, 'reports'] as const,
+  traineeActivePlan: (traineeId: string) => ['trainees', traineeId, 'active-plan'] as const,
   plans: () => ['plans'] as const,
   plan: (planId: string) => ['plans', planId] as const,
   reportTemplates: () => ['reports', 'templates'] as const,
