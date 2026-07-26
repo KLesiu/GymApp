@@ -52,12 +52,15 @@ export class WorkoutService {
     return finalized.payload.responseJson
   }
 
-  async listHistory(userId: string) {
-    return (await this.repository.listFinalized(userId)).map((workout) => ({
+  async listHistory(actorUserId: string, targetUserId = actorUserId) {
+    await this.accessService.assertSelfOrActiveTrainerRelationship(actorUserId, targetUserId)
+    return (await this.repository.listFinalized(targetUserId)).map((workout) => ({
       _id: workout.id,
       id: workout.id,
+      status: workout.status,
       createdAt: workout.startedAt,
       completedAt: workout.completedAt,
+      gymId: workout.gymId,
       gym: workout.gym.name,
       planDay: workout.planDay ? { _id: workout.planDay.id, name: workout.planDay.name } : null,
       exercises: workout.sets.map((set) => ({
@@ -104,12 +107,14 @@ export class WorkoutService {
     }
   }
 
-  async getTrainingDates(userId: string) {
-    return (await this.repository.listFinalized(userId)).map((workout) => workout.startedAt)
+  async getTrainingDates(actorUserId: string, targetUserId = actorUserId) {
+    await this.accessService.assertSelfOrActiveTrainerRelationship(actorUserId, targetUserId)
+    return (await this.repository.listFinalized(targetUserId)).map((workout) => workout.startedAt)
   }
 
-  async getEloChart(userId: string) {
-    return (await this.repository.getEloChart(userId)).map((entry) => ({
+  async getEloChart(actorUserId: string, targetUserId = actorUserId) {
+    await this.accessService.assertSelfOrActiveTrainerRelationship(actorUserId, targetUserId)
+    return (await this.repository.getEloChart(targetUserId)).map((entry) => ({
       _id: entry.id,
       value: entry.newElo,
       date: entry.createdAt.toISOString(),

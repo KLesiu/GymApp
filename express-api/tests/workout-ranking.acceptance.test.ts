@@ -233,9 +233,79 @@ describeAcceptance("workout ranking acceptance", (environment, register) => {
     const chart = await authRequest(environment.client.get("/api/v1/elo/chart"), user.token)
 
     expect(history.body).toHaveLength(2)
+    expect(history.body[0].gymId).toBe(gym.body._id)
     expect(dates.body).toHaveLength(2)
     expect(detail.body.exercises[0].exerciseName).toBe("History Bench")
     expect(chart.body.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("allows an active trainer to view trainee workout history and Elo chart", async () => {
+    const trainer = await register(
+      "workout-history-trainer",
+      "workout-history-trainer@example.com",
+      ["TRAINER"],
+    )
+    const trainee = await register("workout-history-trainee", "workout-history-trainee@example.com")
+    const stranger = await register(
+      "workout-history-stranger",
+      "workout-history-stranger@example.com",
+    )
+    const relationship = await createRelationship(environment, trainer.token, trainee.email)
+
+    await authRequest(
+      environment.client.post(`/api/v1/trainee/relationships/${relationship.body.id}/accept`),
+      trainee.token,
+    ).send()
+
+    const exercise = await createExercise(
+      environment,
+      trainee.token,
+      "Coach Visible Bench",
+      "CHEST",
+      "STANDARD",
+    )
+    const gym = await authRequest(environment.client.post("/api/v1/gyms"), trainee.token).send({
+      name: "Coach Visible Gym",
+      address: "History",
+    })
+
+    await finalizeWorkout(
+      environment,
+      trainee.token,
+      gym.body._id,
+      exercise.body._id,
+      80,
+      "coach-history-base",
+    )
+    await finalizeWorkout(
+      environment,
+      trainee.token,
+      gym.body._id,
+      exercise.body._id,
+      90,
+      "coach-history-next",
+    )
+
+    const trainerHistory = await authRequest(
+      environment.client.get(`/api/v1/workouts?userId=${trainee.userId}`),
+      trainer.token,
+    )
+    const trainerChart = await authRequest(
+      environment.client.get(`/api/v1/elo/chart?userId=${trainee.userId}`),
+      trainer.token,
+    )
+    const blockedHistory = await authRequest(
+      environment.client.get(`/api/v1/workouts?userId=${trainee.userId}`),
+      stranger.token,
+    )
+
+    expect(trainerHistory.status).toBe(200)
+    expect(trainerHistory.body).toHaveLength(2)
+    expect(trainerHistory.body[0].gymId).toBe(gym.body._id)
+    expect(trainerChart.status).toBe(200)
+    expect(trainerChart.body.length).toBeGreaterThanOrEqual(1)
+    expect(blockedHistory.status).toBe(403)
+    expect(blockedHistory.body.error.code).toBe("ACTIVE_TRAINER_RELATIONSHIP_REQUIRED")
   })
 })
 
@@ -279,3 +349,12 @@ const finalizeWorkout = async (
     .set("Idempotency-Key", key)
     .send()
 }
+
+const createRelationship = async (
+  environment: Parameters<Parameters<typeof describeAcceptance>[1]>[0],
+  trainerToken: string,
+  traineeEmail: string,
+) =>
+  authRequest(environment.client.post("/api/v1/trainer/relationships"), trainerToken).send({
+    traineeEmail,
+  })

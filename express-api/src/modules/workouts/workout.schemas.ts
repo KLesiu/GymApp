@@ -46,3 +46,5 @@ export const finalizeWorkoutSchema = z
   .default({})
 
 export const workoutParamsSchema = z.object({ workoutId: z.string().uuid() })
+
+export const workoutHistoryQuerySchema = z.object({ userId: z.string().uuid().optional() })

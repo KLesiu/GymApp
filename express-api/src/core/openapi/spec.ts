@@ -705,7 +705,12 @@ export const openApiSpec = {
       },
     },
     "/api/v1/workouts": {
-      get: { summary: "List finalized workouts", security: auth, responses: { "200": ok } },
+      get: {
+        summary: "List finalized workouts",
+        security: auth,
+        parameters: [queryParam("userId", uuidSchema)],
+        responses: { "200": ok },
+      },
       post: {
         summary: "Create workout draft",
         security: auth,
@@ -714,7 +719,12 @@ export const openApiSpec = {
       },
     },
     "/api/v1/workouts/dates": {
-      get: { summary: "List workout dates", security: auth, responses: { "200": ok } },
+      get: {
+        summary: "List workout dates",
+        security: auth,
+        parameters: [queryParam("userId", uuidSchema)],
+        responses: { "200": ok },
+      },
     },
     "/api/v1/workouts/{workoutId}": {
       get: {
@@ -1015,7 +1025,12 @@ export const openApiSpec = {
       },
     },
     "/api/v1/elo/chart": {
-      get: { summary: "Elo history chart", security: auth, responses: { "200": ok } },
+      get: {
+        summary: "Elo history chart",
+        security: auth,
+        parameters: [queryParam("userId", uuidSchema)],
+        responses: { "200": ok },
+      },
     },
   },
 } as const

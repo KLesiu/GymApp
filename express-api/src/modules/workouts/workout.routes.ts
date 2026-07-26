@@ -9,6 +9,7 @@ import {
   createWorkoutSchema,
   finalizeWorkoutSchema,
   updateWorkoutSetsSchema,
+  workoutHistoryQuerySchema,
   workoutParamsSchema,
 } from "./workout.schemas"
 import { WorkoutService } from "./workout.service"
@@ -61,13 +62,25 @@ export const buildWorkoutRouter = (prisma: PrismaClient) => {
     },
   )
 
-  router.get("/workouts", requireAuth, async (request, response) => {
-    response.json(await service.listHistory(getActorId(request)))
-  })
+  router.get(
+    "/workouts",
+    requireAuth,
+    validate({ query: workoutHistoryQuerySchema }),
+    async (request, response) => {
+      const query = workoutHistoryQuerySchema.parse(request.query)
+      response.json(await service.listHistory(getActorId(request), query.userId))
+    },
+  )
 
-  router.get("/workouts/dates", requireAuth, async (request, response) => {
-    response.json(await service.getTrainingDates(getActorId(request)))
-  })
+  router.get(
+    "/workouts/dates",
+    requireAuth,
+    validate({ query: workoutHistoryQuerySchema }),
+    async (request, response) => {
+      const query = workoutHistoryQuerySchema.parse(request.query)
+      response.json(await service.getTrainingDates(getActorId(request), query.userId))
+    },
+  )
 
   router.get(
     "/workouts/:workoutId",
@@ -79,9 +92,15 @@ export const buildWorkoutRouter = (prisma: PrismaClient) => {
     },
   )
 
-  router.get("/elo/chart", requireAuth, async (request, response) => {
-    response.json(await service.getEloChart(getActorId(request)))
-  })
+  router.get(
+    "/elo/chart",
+    requireAuth,
+    validate({ query: workoutHistoryQuerySchema }),
+    async (request, response) => {
+      const query = workoutHistoryQuerySchema.parse(request.query)
+      response.json(await service.getEloChart(getActorId(request), query.userId))
+    },
+  )
 
   return router
 }
