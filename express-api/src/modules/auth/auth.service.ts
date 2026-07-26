@@ -33,13 +33,14 @@ export class AuthService {
   }
 
   private async registerWithRoles(input: RegisterInput, roles: readonly Role[]) {
+    const email = input.email.toLowerCase()
     const existing = await this.users.findByName(input.name)
 
     if (existing) {
       throw new AppError("USER_NAME_TAKEN", 409)
     }
 
-    const existingEmail = await this.users.findByEmail(input.email)
+    const existingEmail = await this.users.findByEmail(email)
     if (existingEmail) {
       throw new AppError("USER_EMAIL_TAKEN", 409)
     }
@@ -48,7 +49,7 @@ export class AuthService {
     const connectionCode = await this.generateConnectionCode()
     const user = await this.users.create({
       name: input.name,
-      email: input.email,
+      email,
       connectionCode,
       passwordHash,
       isVisibleInRanking: input.isVisibleInRanking,
