@@ -25,13 +25,15 @@ import {
   TextField,
 } from "@/components/primitives";
 import { theme } from "@/theme/tokens";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 type DraftExercise = {
   readonly exerciseId: string;
   readonly series: string;
+  readonly repsTarget: string;
 };
 
 type DayEditor = {
@@ -49,7 +51,9 @@ const groupDaysByWeek = (days: readonly PlanDay[], weeksCount = 1) =>
       weekNumber,
       days: days
         .filter((day) => (day.weekNumber ?? 1) === weekNumber)
-        .sort((left, right) => (left.orderIndex ?? 0) - (right.orderIndex ?? 0)),
+        .sort(
+          (left, right) => (left.orderIndex ?? 0) - (right.orderIndex ?? 0),
+        ),
     };
   });
 
@@ -80,13 +84,18 @@ export default function Plans() {
   const [message, setMessage] = useState<string | null>(null);
   const selectedPlan = useMemo(() => {
     const items = plans.data ?? [];
+    if (!selectedPlanId && activePlan.data) return activePlan.data;
     return (
       items.find((plan) => plan._id === selectedPlanId) ??
       items.find((plan) => plan._id === activePlanId) ??
+      activePlan.data ??
       items[0] ??
       null
     );
-  }, [activePlanId, plans.data, selectedPlanId]);
+  }, [activePlan.data, activePlanId, plans.data, selectedPlanId]);
+  const selectedPlanIsOwned = Boolean(
+    selectedPlan && plans.data?.some((plan) => plan._id === selectedPlan._id),
+  );
   const exerciseById = useMemo(
     () =>
       new Map(
@@ -106,6 +115,13 @@ export default function Plans() {
   const canSavePlan = draftName.trim().length > 0;
   const canSaveDay = dayName.trim().length > 0 && draftExercises.length > 0;
   const savingDay = createPlanDay.isPending || updatePlanDay.isPending;
+
+  useFocusEffect(
+    useCallback(() => {
+      void activePlan.refetch();
+      void plans.refetch();
+    }, [activePlan, plans]),
+  );
 
   const openEditPlan = (plan: Plan) => {
     setEditingPlan(plan);
@@ -143,6 +159,7 @@ export default function Plans() {
       day?.exercises.map((exercise) => ({
         exerciseId: exercise.exerciseId,
         series: String(exercise.series),
+        repsTarget: String(exercise.repsTarget),
       })) ?? [],
     );
     setMessage(null);
@@ -161,14 +178,18 @@ export default function Plans() {
     setDraftExercises((current) =>
       current.some((item) => item.exerciseId === exerciseId)
         ? current
-        : [...current, { exerciseId, series: "3" }],
+        : [...current, { exerciseId, series: "3", repsTarget: "10" }],
     );
   };
 
-  const updateSeries = (exerciseId: string, series: string) => {
+  const updateExerciseTarget = (
+    exerciseId: string,
+    field: "series" | "repsTarget",
+    value: string,
+  ) => {
     setDraftExercises((current) =>
       current.map((item) =>
-        item.exerciseId === exerciseId ? { ...item, series } : item,
+        item.exerciseId === exerciseId ? { ...item, [field]: value } : item,
       ),
     );
   };
@@ -183,14 +204,20 @@ export default function Plans() {
     const items = draftExercises.map((item, index) => ({
       exerciseId: item.exerciseId,
       series: Number.parseInt(item.series, 10),
-      repsTarget: 10,
+      repsTarget: Number.parseInt(item.repsTarget, 10),
       orderIndex: index,
     }));
 
     if (
-      items.some((item) => !Number.isInteger(item.series) || item.series < 1)
+      items.some(
+        (item) =>
+          !Number.isInteger(item.series) ||
+          item.series < 1 ||
+          !Number.isInteger(item.repsTarget) ||
+          item.repsTarget < 1,
+      )
     ) {
-      setMessage("Every selected exercise needs at least one series.");
+      setMessage("Every selected exercise needs valid series and reps.");
       return null;
     }
 
@@ -207,7 +234,9 @@ export default function Plans() {
       weekNumber < 1 ||
       weekNumber > (dayEditor.plan.weeksCount ?? 1)
     ) {
-      setMessage(`Week must be between 1 and ${dayEditor.plan.weeksCount ?? 1}.`);
+      setMessage(
+        `Week must be between 1 and ${dayEditor.plan.weeksCount ?? 1}.`,
+      );
       return;
     }
 
@@ -280,41 +309,64 @@ export default function Plans() {
           </Text>
           <Button
             label="Add training day"
+            disabled={
+              !selectedPlanIsOwned || Boolean(selectedPlan.assignedByTrainer)
+            }
             onPress={() => openDayEditor(selectedPlan)}
           />
+          {selectedPlan.assignedByTrainer ? (
+            <Text tone="muted">
+              This plan was assigned by your coach. It is ready to use for
+              workouts and cannot be edited here.
+            </Text>
+          ) : null}
           {selectedPlan.days.length ? (
-            groupDaysByWeek(selectedPlan.days, selectedPlan.weeksCount).map((week) => (
-              <View key={week.weekNumber} style={styles.weekGroup}>
-                <Text variant="subtitle">Week {week.weekNumber}</Text>
-                {week.days.length ? (
-                  week.days.map((day) => (
-                    <Card key={day._id} style={styles.dayCard}>
-                      <View style={styles.dayRow}>
-                        <View style={styles.dayText}>
-                          <Text variant="subtitle">{day.name}</Text>
-                          <Text tone="muted">Exercises: {day.exercises.length}</Text>
-                          <Text tone="muted">Total series: {totalSeries(day)}</Text>
+            groupDaysByWeek(selectedPlan.days, selectedPlan.weeksCount).map(
+              (week) => (
+                <View key={week.weekNumber} style={styles.weekGroup}>
+                  <Text variant="subtitle">Week {week.weekNumber}</Text>
+                  {week.days.length ? (
+                    week.days.map((day) => (
+                      <Card key={day._id} style={styles.dayCard}>
+                        <View style={styles.dayRow}>
+                          <View style={styles.dayText}>
+                            <Text variant="subtitle">{day.name}</Text>
+                            <Text tone="muted">
+                              Exercises: {day.exercises.length}
+                            </Text>
+                            <Text tone="muted">
+                              Total series: {totalSeries(day)}
+                            </Text>
+                          </View>
+                          <View style={styles.dayActions}>
+                            <IconButton
+                              name="create-outline"
+                              label="Edit training day"
+                              disabled={
+                                !selectedPlanIsOwned ||
+                                Boolean(selectedPlan.assignedByTrainer)
+                              }
+                              onPress={() => openDayEditor(selectedPlan, day)}
+                            />
+                            <IconButton
+                              name="trash-outline"
+                              label="Delete training day"
+                              disabled={
+                                !selectedPlanIsOwned ||
+                                Boolean(selectedPlan.assignedByTrainer)
+                              }
+                              onPress={() => setDeletingDay(day)}
+                            />
+                          </View>
                         </View>
-                        <View style={styles.dayActions}>
-                          <IconButton
-                            name="create-outline"
-                            label="Edit training day"
-                            onPress={() => openDayEditor(selectedPlan, day)}
-                          />
-                          <IconButton
-                            name="trash-outline"
-                            label="Delete training day"
-                            onPress={() => setDeletingDay(day)}
-                          />
-                        </View>
-                      </View>
-                    </Card>
-                  ))
-                ) : (
-                  <Text tone="muted">No training days in this week yet.</Text>
-                )}
-              </View>
-            ))
+                      </Card>
+                    ))
+                  ) : (
+                    <Text tone="muted">No training days in this week yet.</Text>
+                  )}
+                </View>
+              ),
+            )
           ) : (
             <EmptyState
               title="No training days"
@@ -360,7 +412,8 @@ export default function Plans() {
                         tone={isActive ? "success" : "muted"}
                       >
                         {isActive ? "Active plan" : "Inactive"} ·{" "}
-                        {plan.weeksCount ?? 1} week(s) · {plan.days.length} day(s)
+                        {plan.weeksCount ?? 1} week(s) · {plan.days.length}{" "}
+                        day(s)
                       </Text>
                       <View style={styles.actionRow}>
                         <Button
@@ -508,7 +561,19 @@ export default function Plans() {
                       keyboardType="numeric"
                       value={item.series}
                       onChangeText={(value) =>
-                        updateSeries(item.exerciseId, value)
+                        updateExerciseTarget(item.exerciseId, "series", value)
+                      }
+                    />
+                    <TextField
+                      label="Reps"
+                      keyboardType="numeric"
+                      value={item.repsTarget}
+                      onChangeText={(value) =>
+                        updateExerciseTarget(
+                          item.exerciseId,
+                          "repsTarget",
+                          value,
+                        )
                       }
                     />
                     <Button

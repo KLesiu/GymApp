@@ -130,6 +130,18 @@ export type LastScore = {
   date?: string;
   gymName?: string;
 };
+
+const toLastScores = (value: unknown): LastScore[] => {
+  if (Array.isArray(value)) return value as LastScore[];
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (Array.isArray(record.scores)) return record.scores as LastScore[];
+    if (Array.isArray(record.items)) return record.items as LastScore[];
+    if (Array.isArray(record.lastScores))
+      return record.lastScores as LastScore[];
+  }
+  return [];
+};
 export type Measurement = {
   _id: string;
   bodyPart: string;
@@ -175,7 +187,10 @@ export const useCoachInvitations = () =>
   useQuery({
     queryKey: keys.coachInvitations,
     queryFn: ({ signal }) =>
-      request<CoachInvitation[]>({ url: "/api/v1/trainee/relationships" }, signal),
+      request<CoachInvitation[]>(
+        { url: "/api/v1/trainee/relationships" },
+        signal,
+      ),
   });
 export const useGyms = () =>
   useQuery({
@@ -598,11 +613,11 @@ export const useLastScores = () =>
       series: number;
       gymId: string;
     }) =>
-      request<LastScore[]>({
+      request<unknown>({
         url: "/api/v1/exercises/last-scores",
         method: "POST",
         data: body,
-      }),
+      }).then(toLastScores),
   });
 export const useCreateMeasurement = () => {
   const qc = useQueryClient();
@@ -663,7 +678,8 @@ export const useRejectCoachInvitation = () => {
         url: `/api/v1/trainee/relationships/${relationshipId}/reject`,
         method: "POST",
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.coachInvitations }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: keys.coachInvitations }),
   });
 };
 export const useDetachCoach = () => {

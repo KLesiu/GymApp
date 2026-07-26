@@ -123,16 +123,19 @@ export const IconButton = ({
   name,
   label,
   onPress,
+  disabled,
 }: {
   name: ComponentProps<typeof Ionicons>["name"];
   label: string;
   onPress?: (() => void) | undefined;
+  disabled?: boolean;
 }) => (
   <Pressable
     accessibilityRole="button"
     accessibilityLabel={label}
+    disabled={disabled}
     onPress={onPress}
-    style={styles.icon}
+    style={[styles.icon, disabled && styles.disabled]}
   >
     <Ionicons name={name} size={22} color={theme.colors.text} />
   </Pressable>
