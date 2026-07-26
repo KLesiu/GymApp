@@ -71,6 +71,8 @@ runInfo(npm, npmArgs(['exec', '--', 'prisma', 'migrate', 'status']), apiDir, { D
 console.log('Applying pending migrations, if any...')
 run(npm, npmArgs(['run', 'prisma:migrate']), apiDir, { DATABASE_URL: hostDatabaseUrl })
 run(npm, npmArgs(['run', 'prisma:generate']), apiDir, { DATABASE_URL: hostDatabaseUrl })
+console.log('Ensuring demo users and 50 global starter exercises exist...')
+run(npm, npmArgs(['run', 'prisma:seed']), apiDir, { DATABASE_URL: hostDatabaseUrl })
 
 console.log('Regenerating API clients...')
 run(npm, npmArgs(['run', 'generate:api']), coachDir)

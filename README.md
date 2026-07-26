@@ -14,7 +14,7 @@ Fast root commands:
 npm run dev:all
 ```
 
-This starts PostgreSQL, checks and applies pending Prisma migrations, regenerates API clients, then starts `express-api`, `liftcontext-coach`, and `mobile`.
+This starts PostgreSQL, checks and applies pending Prisma migrations, ensures demo users plus global starter exercises exist, regenerates API clients, then starts `express-api`, `liftcontext-coach`, and `mobile`.
 
 For a destructive fresh start:
 
