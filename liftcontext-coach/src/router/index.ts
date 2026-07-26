@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     { path: 'relationships', redirect: { name: 'invitations' } },
     { path: 'plans', name: 'plans', component: () => import('@/features/plans/PlansView.vue') },
     { path: 'plans/new', name: 'plan-new', component: () => import('@/features/plans/PlanEditorView.vue') },
-    { path: 'plans/:planId', redirect: { name: 'plans' } },
+    { path: 'plans/:planId', name: 'plan-detail', component: () => import('@/features/plans/PlanEditorView.vue') },
     { path: 'reports/templates', name: 'report-templates', component: () => import('@/features/reports/ReportTemplatesView.vue') },
     { path: 'reports/templates/new', name: 'report-template-new', component: () => import('@/features/reports/ReportTemplateEditorView.vue') },
     { path: 'reports/templates/:templateId', redirect: { name: 'report-templates' } },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { usePlansQuery } from '@/api/queries/domainQueries'
+import { useDeletePlan, usePlansQuery } from '@/api/queries/domainQueries'
 import LcButton from '@/components/ui/LcButton.vue'
 import LcCard from '@/components/ui/LcCard.vue'
 import LcEmptyState from '@/components/ui/LcEmptyState.vue'
@@ -9,8 +9,12 @@ import LcErrorState from '@/components/ui/LcErrorState.vue'
 import LcSkeleton from '@/components/ui/LcSkeleton.vue'
 
 const plans = usePlansQuery()
+const deletePlan = useDeletePlan()
 const totalWeeks = computed(() => (plans.data.value ?? []).reduce((sum, plan) => sum + plan.weeksCount, 0))
 const daysInWeek = (plan: { days: { weekNumber: number }[] }, weekNumber: number) => plan.days.filter((day) => day.weekNumber === weekNumber).length
+const removePlan = (planId: string, planName: string) => {
+  if (window.confirm(`Delete plan template "${planName}"? Assigned trainee plans will stay available.`)) deletePlan.mutate(planId)
+}
 </script>
 
 <template>
@@ -44,13 +48,18 @@ const daysInWeek = (plan: { days: { weekNumber: number }[] }, weekNumber: number
     <LcErrorState v-else-if="plans.isError.value" @retry="plans.refetch()" />
     <LcEmptyState v-else-if="(plans.data.value ?? []).length === 0" title="No plans yet" description="Create your first plan to start building reusable training blocks." />
     <div v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <LcCard v-for="plan in plans.data.value" :key="plan.id">
-        <h2 class="font-display text-xl font-bold text-ink">{{ plan.name }}</h2>
-        <p class="mt-2 min-h-10 text-sm text-textMuted">{{ plan.description ?? 'Structured training block ready for editing.' }}</p>
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-bold text-textMuted">
-          <span v-for="week in plan.weeksCount" :key="week" class="rounded-full bg-surfaceMuted px-3 py-1">Week {{ week }} · {{ daysInWeek(plan, week) }} day(s)</span>
+      <div v-for="plan in plans.data.value" :key="plan.id" class="h-full rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-contextDark hover:shadow-card">
+        <div class="flex items-start justify-between gap-3">
+          <RouterLink :to="`/plans/${plan.id}`" class="min-w-0 flex-1"><h2 class="font-display text-xl font-bold text-ink">{{ plan.name }}</h2></RouterLink>
+          <button type="button" class="text-sm font-bold text-danger" :disabled="deletePlan.isPending.value" @click="removePlan(plan.id, plan.name)">Delete</button>
         </div>
-      </LcCard>
+        <RouterLink :to="`/plans/${plan.id}`" class="block">
+          <p class="mt-2 min-h-10 text-sm text-textMuted">{{ plan.description ?? 'Structured training block ready for editing.' }}</p>
+          <div class="mt-4 flex flex-wrap gap-2 text-xs font-bold text-textMuted">
+            <span v-for="week in plan.weeksCount" :key="week" class="rounded-full bg-surfaceMuted px-3 py-1">Week {{ week }} · {{ daysInWeek(plan, week) }} day(s)</span>
+          </div>
+        </RouterLink>
+      </div>
     </div>
   </section>
 </template>
