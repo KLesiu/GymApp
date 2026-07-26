@@ -3,6 +3,7 @@ import type { PrismaClient, Role } from "@prisma/client"
 type CreateUserInput = {
   readonly name: string
   readonly email: string
+  readonly connectionCode: string
   readonly passwordHash: string
   readonly isVisibleInRanking: boolean
   readonly roles: readonly Role[]
@@ -16,6 +17,7 @@ export class UserRepository {
       data: {
         name: input.name,
         email: input.email,
+        connectionCode: input.connectionCode,
         passwordHash: input.passwordHash,
         isVisibleInRanking: input.isVisibleInRanking,
         roles: {
@@ -31,6 +33,20 @@ export class UserRepository {
   async findByName(name: string) {
     return this.prisma.user.findUnique({
       where: { name },
+      include: { roles: true },
+    })
+  }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    })
+  }
+
+  async findByConnectionCode(connectionCode: string) {
+    return this.prisma.user.findUnique({
+      where: { connectionCode },
       include: { roles: true },
     })
   }

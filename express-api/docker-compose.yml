@@ -4,11 +4,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lgym_express
+      POSTGRES_DB: liftcontext
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lgym_express"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d liftcontext"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,7 +21,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/lgym_express?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/liftcontext?schema=public
       JWT_SECRET: change-me-in-real-environments
       PORT: 3000
       NODE_ENV: production

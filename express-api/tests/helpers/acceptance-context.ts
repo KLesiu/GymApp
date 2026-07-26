@@ -5,6 +5,7 @@ import { TestEnvironment } from "./test-environment"
 export type AuthenticatedUser = {
   readonly token: string
   readonly userId: string
+  readonly connectionCode: string
 }
 
 export const authRequest = <T extends { set(name: string, value: string): T }>(
@@ -31,7 +32,8 @@ export const describeAcceptance = (
 
     return {
       token: response.body.token,
-      userId: response.body.req._id,
+      userId: response.body.req.id,
+      connectionCode: response.body.req.connectionCode,
     }
   }
 

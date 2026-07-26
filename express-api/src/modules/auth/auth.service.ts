@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto"
 import type { PrismaClient, Role } from "@prisma/client"
 import argon2 from "argon2"
 import jwt from "jsonwebtoken"
@@ -38,10 +39,17 @@ export class AuthService {
       throw new AppError("USER_NAME_TAKEN", 409)
     }
 
+    const existingEmail = await this.users.findByEmail(input.email)
+    if (existingEmail) {
+      throw new AppError("USER_EMAIL_TAKEN", 409)
+    }
+
     const passwordHash = await argon2.hash(input.password)
+    const connectionCode = await this.generateConnectionCode()
     const user = await this.users.create({
       name: input.name,
       email: input.email,
+      connectionCode,
       passwordHash,
       isVisibleInRanking: input.isVisibleInRanking,
       roles,
@@ -83,5 +91,16 @@ export class AuthService {
       req,
       permissionClaims: req.permissionClaims,
     }
+  }
+
+  private async generateConnectionCode() {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const code = randomBytes(6).toString("hex").toUpperCase()
+      if (!(await this.users.findByConnectionCode(code))) {
+        return code
+      }
+    }
+
+    throw new AppError("CONNECTION_CODE_GENERATION_FAILED", 500)
   }
 }

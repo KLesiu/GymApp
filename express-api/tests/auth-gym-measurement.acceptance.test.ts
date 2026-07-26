@@ -32,7 +32,7 @@ describeAcceptance("auth gym measurement acceptance", (environment, register) =>
     const relationship = await authRequest(
       environment.client.post("/api/v1/trainer/relationships"),
       trainee.token,
-    ).send({ traineeId: target.userId })
+    ).send({ traineeCode: target.connectionCode })
     const template = await authRequest(
       environment.client.post("/api/v1/trainer/report-templates"),
       trainee.token,

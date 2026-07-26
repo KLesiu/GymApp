@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import type { PrismaClient } from "@prisma/client"
 
 import { AccessService } from "../../core/access/access-service"
@@ -34,16 +35,18 @@ export class WorkoutService {
     userId: string,
     workoutId: string,
     idempotencyKey: string,
-    input?: Parameters<WorkoutRepository["finalizeWorkout"]>[3],
+    input?: Parameters<WorkoutRepository["finalizeWorkout"]>[4],
   ) {
     if (!idempotencyKey) {
       throw new ForbiddenError("IDEMPOTENCY_KEY_REQUIRED")
     }
 
+    const requestHash = hashFinalizeRequest(paramsToStableJson(input ?? {}))
     const finalized = await this.repository.finalizeWorkout(
       userId,
       workoutId,
       idempotencyKey,
+      requestHash,
       input,
     )
     return finalized.payload.responseJson
@@ -113,3 +116,19 @@ export class WorkoutService {
     }))
   }
 }
+
+const paramsToStableJson = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return `[${value.map(paramsToStableJson).join(",")}]`
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${paramsToStableJson(record[key])}`)
+      .join(",")}}`
+  }
+  return JSON.stringify(value)
+}
+
+const hashFinalizeRequest = (body: string) => createHash("sha256").update(body).digest("hex")

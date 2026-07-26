@@ -1,6 +1,11 @@
 import type { Prisma, PrismaClient } from "@prisma/client"
 
-import { ForbiddenError, NotFoundError, ValidationAppError } from "../../core/errors/app-error"
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationAppError,
+} from "../../core/errors/app-error"
 import { getCurrentRank, getNextRank } from "../../shared/rank-service"
 import { calculateEloGain, calculateFormulaScore } from "./elo"
 
@@ -161,6 +166,7 @@ export class WorkoutRepository {
     userId: string,
     workoutId: string,
     idempotencyKey: string,
+    requestHash: string,
     input?: {
       readonly sets?: readonly {
         readonly id?: string
@@ -178,10 +184,20 @@ export class WorkoutRepository {
       })
 
       if (existingIdempotency) {
+        this.assertSameIdempotencyRequest(existingIdempotency, workoutId, requestHash)
         return { kind: "idempotent" as const, payload: existingIdempotency }
       }
 
       await this.lockWorkout(transaction, workoutId)
+
+      const idempotencyAfterLock = await transaction.idempotencyKey.findUnique({
+        where: { userId_scope_key: { userId, scope: "workout.finalize", key: idempotencyKey } },
+      })
+
+      if (idempotencyAfterLock) {
+        this.assertSameIdempotencyRequest(idempotencyAfterLock, workoutId, requestHash)
+        return { kind: "idempotent" as const, payload: idempotencyAfterLock }
+      }
 
       const workout = await transaction.workoutSession.findUnique({
         where: { id: workoutId },
@@ -349,6 +365,8 @@ export class WorkoutRepository {
           userId,
           scope: "workout.finalize",
           key: idempotencyKey,
+          resourceId: workoutId,
+          requestHash,
           statusCode: 200,
           responseJson: {
             comparison,
@@ -432,5 +450,15 @@ export class WorkoutRepository {
 
   private async lockWorkout(transaction: Prisma.TransactionClient, workoutId: string) {
     await transaction.$queryRaw`SELECT id FROM "WorkoutSession" WHERE id = ${workoutId}::uuid FOR UPDATE`
+  }
+
+  private assertSameIdempotencyRequest(
+    existing: { readonly resourceId: string | null; readonly requestHash: string },
+    workoutId: string,
+    requestHash: string,
+  ) {
+    if (existing.resourceId !== workoutId || existing.requestHash !== requestHash) {
+      throw new AppError("IDEMPOTENCY_KEY_REUSED", 409)
+    }
   }
 }

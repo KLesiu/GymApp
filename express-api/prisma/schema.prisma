@@ -97,6 +97,7 @@ model User {
   id                  String                @id @default(uuid()) @db.Uuid
   name                String                @unique
   email               String                @unique
+  connectionCode      String                @unique
   passwordHash        String
   preferredTimeZone   String                @default("UTC")
   isVisibleInRanking  Boolean               @default(true)
@@ -183,6 +184,7 @@ model Plan {
   ownerId     String           @db.Uuid
   name        String
   description String?
+  weeksCount  Int              @default(1)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   owner       User             @relation("PlanOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -197,13 +199,14 @@ model PlanDay {
   id          String         @id @default(uuid()) @db.Uuid
   planId      String         @db.Uuid
   name        String
+  weekNumber  Int            @default(1)
   orderIndex  Int
   createdAt   DateTime       @default(now())
   plan        Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
   exercises   PlanExercise[]
   workouts    WorkoutSession[]
 
-  @@unique([planId, orderIndex])
+  @@unique([planId, weekNumber, orderIndex])
 }
 
 model PlanExercise {
@@ -401,6 +404,8 @@ model IdempotencyKey {
   userId       String   @db.Uuid
   scope        String
   key          String
+  resourceId   String?
+  requestHash  String
   statusCode   Int
   responseJson Json
   createdAt    DateTime @default(now())

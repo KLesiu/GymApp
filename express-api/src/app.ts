@@ -15,7 +15,7 @@ import { buildApiRouter } from "./routes"
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 20,
+  limit: env.NODE_ENV === "test" ? 1000 : 20,
   standardHeaders: true,
   legacyHeaders: false,
 })

@@ -12,6 +12,7 @@ const seed = async () => {
     create: {
       name: "seed-trainer",
       email: "trainer@example.com",
+      connectionCode: "TRAINER001",
       passwordHash,
       roles: { create: [{ role: "TRAINER" }] },
     },
@@ -24,6 +25,7 @@ const seed = async () => {
     create: {
       name: "seed-trainee",
       email: "trainee@example.com",
+      connectionCode: "TRAINEE001",
       passwordHash,
       roles: { create: [{ role: "TRAINEE" }] },
     },

@@ -16,12 +16,12 @@ export class TestEnvironment {
   private databaseUrl = ""
   private prisma: PrismaClient | null = null
   private app: StartedModules["app"] | null = null
-  private containerName = `lgym-api-test-${process.pid}-${process.env.VITEST_POOL_ID ?? "0"}`
+  private containerName = `liftcontext-api-test-${process.pid}-${process.env.VITEST_POOL_ID ?? "0"}`
   private postgresPort = 0
 
   async start() {
     await this.startPostgresContainer()
-    this.databaseUrl = `postgresql://postgres:postgres@localhost:${this.postgresPort}/lgym_test?schema=public`
+    this.databaseUrl = `postgresql://postgres:postgres@localhost:${this.postgresPort}/liftcontext_test?schema=public`
     process.env.DATABASE_URL = this.databaseUrl
     process.env.JWT_SECRET = "test-secret-123456"
     process.env.PORT = "3001"
@@ -109,7 +109,7 @@ export class TestEnvironment {
       "--name",
       this.containerName,
       "-e",
-      "POSTGRES_DB=lgym_test",
+      "POSTGRES_DB=liftcontext_test",
       "-e",
       "POSTGRES_USER=postgres",
       "-e",

@@ -9,6 +9,7 @@ export const planExerciseSchema = z.object({
 
 export const planDaySchema = z.object({
   name: z.string().min(1),
+  weekNumber: z.number().int().positive().default(1),
   orderIndex: z.number().int().nonnegative(),
   exercises: z.array(planExerciseSchema),
 })
@@ -16,6 +17,7 @@ export const planDaySchema = z.object({
 export const createPlanSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  weeksCount: z.number().int().positive().default(1),
   days: z.array(planDaySchema).default([]),
 })
 
@@ -23,6 +25,7 @@ export const updatePlanSchema = z
   .object({
     name: z.string().min(1).optional(),
     description: z.string().optional(),
+    weeksCount: z.number().int().positive().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one field is required",

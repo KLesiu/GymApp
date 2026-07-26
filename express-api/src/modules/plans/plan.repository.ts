@@ -8,8 +8,10 @@ export class PlanRepository {
     input: {
       readonly name: string
       readonly description?: string
+      readonly weeksCount?: number
       readonly days?: readonly {
         readonly name: string
+        readonly weekNumber?: number
         readonly orderIndex: number
         readonly exercises: readonly {
           readonly exerciseId: string
@@ -25,9 +27,11 @@ export class PlanRepository {
         ownerId,
         name: input.name,
         description: input.description ?? null,
+        weeksCount: input.weeksCount ?? 1,
         days: {
           create: (input.days ?? []).map((day) => ({
             name: day.name,
+            weekNumber: day.weekNumber ?? 1,
             orderIndex: day.orderIndex,
             exercises: {
               create: day.exercises.map((exercise) => ({
@@ -70,6 +74,7 @@ export class PlanRepository {
     input: {
       readonly name?: string
       readonly description?: string
+      readonly weeksCount?: number
     },
   ) {
     return this.prisma.plan.updateMany({ where: { id: planId, ownerId }, data: input })
@@ -98,8 +103,10 @@ export class PlanRepository {
 
     const copiedInput = {
       name: `${plan.name} copy`,
+      weeksCount: plan.weeksCount,
       days: plan.days.map((day) => ({
         name: day.name,
+        weekNumber: day.weekNumber,
         orderIndex: day.orderIndex,
         exercises: day.exercises.map((exercise) => ({
           exerciseId: exercise.exerciseId,
@@ -118,6 +125,7 @@ export class PlanRepository {
     planId: string,
     input: {
       readonly name: string
+      readonly weekNumber?: number
       readonly orderIndex: number
       readonly exercises: readonly {
         readonly exerciseId: string
@@ -131,6 +139,7 @@ export class PlanRepository {
       data: {
         planId,
         name: input.name,
+        weekNumber: input.weekNumber ?? 1,
         orderIndex: input.orderIndex,
         exercises: { create: input.exercises.map((exercise) => ({ ...exercise })) },
       },
@@ -141,7 +150,7 @@ export class PlanRepository {
   async findPlanDay(ownerId: string, planDayId: string) {
     return this.prisma.planDay.findFirst({
       where: { id: planDayId, plan: { ownerId } },
-      include: { exercises: true },
+      include: { exercises: true, plan: true },
     })
   }
 
@@ -162,6 +171,7 @@ export class PlanRepository {
     planDayId: string,
     input: {
       readonly name: string
+      readonly weekNumber?: number
       readonly orderIndex: number
       readonly exercises: readonly {
         readonly exerciseId: string
@@ -182,6 +192,7 @@ export class PlanRepository {
         where: { id: planDayId },
         data: {
           name: input.name,
+          weekNumber: input.weekNumber ?? 1,
           orderIndex: input.orderIndex,
           exercises: { create: input.exercises.map((exercise) => ({ ...exercise })) },
         },

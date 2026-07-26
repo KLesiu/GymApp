@@ -13,9 +13,11 @@ export const mapUserInfo = (user: UserWithRoles) => {
   const nextRank = getNextRank(user.elo)
 
   return {
+    id: user.id,
     name: user.name,
     _id: user.id,
     email: user.email,
+    connectionCode: user.connectionCode,
     avatar: null,
     profileRank: currentRank.name,
     preferredTimeZone: user.preferredTimeZone,
@@ -58,6 +60,7 @@ export class UserService {
 
     return {
       items: ranking.items.map((user) => ({
+        id: user.id,
         _id: user.id,
         name: user.name,
         elo: user.elo,

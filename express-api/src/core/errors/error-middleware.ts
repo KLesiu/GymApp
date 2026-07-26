@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client"
 import type { NextFunction, Request, Response } from "express"
 import { ZodError } from "zod"
 
@@ -38,6 +39,23 @@ export const errorMiddleware = (
   if (error instanceof AppError) {
     response.status(error.statusCode).json(buildErrorPayload(error.code, error.details))
     return
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      response.status(409).json(buildErrorPayload("UNIQUE_CONSTRAINT_VIOLATION"))
+      return
+    }
+
+    if (error.code === "P2003") {
+      response.status(409).json(buildErrorPayload("FOREIGN_KEY_CONSTRAINT_VIOLATION"))
+      return
+    }
+
+    if (error.code === "P2025") {
+      response.status(404).json(buildErrorPayload("RESOURCE_NOT_FOUND"))
+      return
+    }
   }
 
   response.status(500).json(buildErrorPayload("INTERNAL_SERVER_ERROR"))

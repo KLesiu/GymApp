@@ -11,14 +11,49 @@ export class TrainerRepository {
     })
   }
 
+  async findUserByConnectionCode(connectionCode: string) {
+    return this.prisma.user.findUnique({
+      where: { connectionCode },
+      include: { roles: true },
+    })
+  }
+
   async findRelationshipById(relationshipId: string) {
     return this.prisma.trainerRelationship.findUnique({ where: { id: relationshipId } })
   }
 
   async activateRelationship(relationshipId: string) {
-    return this.prisma.trainerRelationship.update({
-      where: { id: relationshipId },
-      data: { status: "ACTIVE", activatedAt: new Date(), detachedAt: null },
+    return this.prisma.$transaction(async (transaction) => {
+      const relationship = await transaction.trainerRelationship.findUnique({
+        where: { id: relationshipId },
+      })
+      if (!relationship) {
+        return null
+      }
+
+      if (relationship.status !== "PENDING") {
+        return "RELATIONSHIP_NOT_PENDING" as const
+      }
+
+      const activeCount = await transaction.trainerRelationship.count({
+        where: { traineeId: relationship.traineeId, status: "ACTIVE", id: { not: relationshipId } },
+      })
+      if (activeCount > 0) {
+        return "ACTIVE_TRAINER_CONFLICT" as const
+      }
+
+      return transaction.trainerRelationship.update({
+        where: { id: relationshipId, status: "PENDING" },
+        data: { status: "ACTIVE", activatedAt: new Date(), detachedAt: null },
+      })
+    })
+  }
+
+  async listPendingForTrainee(traineeId: string) {
+    return this.prisma.trainerRelationship.findMany({
+      where: { traineeId, status: "PENDING" },
+      include: { trainer: true },
+      orderBy: { createdAt: "asc" },
     })
   }
 
