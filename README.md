@@ -74,3 +74,7 @@ The API acceptance tests run against a real PostgreSQL container started with Do
 - Trainee registers, creates gym/exercise/plan, finishes workouts, sees same-gym benchmark and LiftContext Rating changes.
 - Trainer registers, invites trainee by email, assigns plans/reports, and sees authorized trainee data.
 - Report templates use frozen versions so old assignments render their original fields after template edits.
+
+## Implementation and thesis roadmap
+
+See [ROADMAP.md](ROADMAP.md) for the phased completion plan, requirement mapping, module choices, and acceptance criteria. Track progress in [roadmap issue #33](https://github.com/KLesiu/GymApp/issues/33); record optional-module choices in [decision issue #2](https://github.com/KLesiu/GymApp/issues/2).
