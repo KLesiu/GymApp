@@ -2,7 +2,7 @@
 
 Plan z 7 listopada 2026, na podstawie dwóch DOCX i audytu repozytoriów. Punkt wyjścia GymApp: `d3913e50ed08894a60b541768da30663feeffcc5`. To plan domknięcia istniejącej implementacji, badań i pracy, nie deklaracja ukończonej aplikacji.
 
-**Rekomendacja:** zachować Express/Prisma/PostgreSQL, Expo React Native i panel Vue; ukończyć pełny zakres DOCX. Moduły dodatkowe pozostają niezatwierdzone. Issue decyzyjne: [LC-00 #2](https://github.com/KLesiu/GymApp/issues/2). Główna roadmapa w Issues: [#33](https://github.com/KLesiu/GymApp/issues/33).
+**Rekomendacja:** zachować Express/Prisma/PostgreSQL, Expo React Native i panel Vue; ukończyć pełny zakres DOCX. D07 (dieta i posiłki) zatwierdzono; pozostałe dodatki oczekują na decyzję. Issue decyzyjne: [LC-00 #2](https://github.com/KLesiu/GymApp/issues/2). Główna roadmapa w Issues: [#33](https://github.com/KLesiu/GymApp/issues/33).
 
 ## Dokumenty planu
 
@@ -78,7 +78,7 @@ Każdy moduł wymaga osobnego wyboru TAK/PÓŹNIEJ/NIE w [LC-00 #2](https://gith
 
 - [ ] [LC-26 #28](https://github.com/KLesiu/GymApp/issues/28) — Powiadomienia, onboarding i pełne PL/EN
 - [ ] [LC-27 #29](https://github.com/KLesiu/GymApp/issues/29) — Ranking społecznościowy, rekordy ręczne i dodatkowa analityka
-- [ ] [LC-28 #30](https://github.com/KLesiu/GymApp/issues/30) — Notatki trenera, dieta i załączniki zdjęciowe
+- [ ] [LC-28 #30](https://github.com/KLesiu/GymApp/issues/30) — Notatki trenera, zdjęcia i suplementacja
 - [ ] [LC-29 #31](https://github.com/KLesiu/GymApp/issues/31) — Udostępnianie planów i timer przerw
 - [ ] [LC-30 #32](https://github.com/KLesiu/GymApp/issues/32) — OAuth, administracja i strona informacyjna
 
@@ -105,3 +105,10 @@ Każdy moduł wymaga osobnego wyboru TAK/PÓŹNIEJ/NIE w [LC-00 #2](https://gith
 | Niezweryfikowane pochodzenie kodu lub marki | Własna implementacja i zasoby; audyt przed adaptacją |
 
 Właścicielem decyzji zakresowych jest autor pracy. Issues nie zostały przypisane innym osobom ani opatrzone wymyślonymi datami. Etapy M0–M5 są logicznymi kamieniami milowymi w tej roadmapie; nie oznacza to utworzenia natywnych GitHub Milestones lub Projects.
+
+
+## Zatwierdzony moduł D07
+
+**D07 = TAK**, decyzja autora z 7 listopada 2026. Dieta i posiłki wchodzą do planowanego wydania w M3: [zadanie #35](https://github.com/KLesiu/GymApp/issues/35). Proponowany zakres: trener tworzy i przypisuje plan posiłków, podopieczny odczytuje go w mobile; pełne API, kontrola dostępu i test przekrojowy. Pozostałe dodatki oczekują na decyzję.
+
+Dodatkowy wstępny nakład: 8–16 h. Baza + D07: **254–408 h**, z buforem 25% około **318–510 h**. Szczegółowy zakres i wycena podlegają doprecyzowaniu przed implementacją. Odbiór D07 poprzedza zamknięcie testów, demo i dokumentacji wydania.
