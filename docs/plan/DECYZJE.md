@@ -10,7 +10,7 @@ F-11–F-14 nazwano w pracy „wspierającymi”, ale raporty i rating są powi�
 
 ## Moduły dodatkowe do wyboru
 
-Szacunki poniżej są orientacyjne, zależą od współdzielonej infrastruktury i nie należy dodawać ich ponownie do wycen zbiorczych issues. Nie zawierają opłat usług. Stan wszystkich: **do decyzji**.
+Szacunki poniżej są orientacyjne, zależą od współdzielonej infrastruktury i nie należy dodawać ich ponownie do wycen zbiorczych issues. Nie zawierają opłat usług. D07: **TAK** (7 listopada 2026); pozostałe moduły: **do decyzji**.
 
 | Kod | Moduł | Co daje | Rekomendacja | Orientacyjny dodatkowy nakład | Zadanie |
 |---|---|---|---|---|---|
@@ -20,7 +20,7 @@ Szacunki poniżej są orientacyjne, zależą od współdzielonej infrastruktury 
 | D04 | Ręczne rekordy i estymacja 1RM | Osobne wpisy rekordów oraz jawnie oznaczone estymacje | Później | 6–10 h | [LC-27 #29](https://github.com/KLesiu/GymApp/issues/29) |
 | D05 | Wszystkie siłownie i bogatsza analityka | Dodatkowy tryb porównania i wykresy | Później | 6–10 h | [LC-27 #29](https://github.com/KLesiu/GymApp/issues/29) |
 | D06 | Notatki trenera i cele | Zapis ustaleń współpracy | Opcjonalnie po rdzeniu | 6–10 h | [LC-28 #30](https://github.com/KLesiu/GymApp/issues/30) |
-| D07 | Dieta i posiłki | Dodatkowa domena żywieniowa | Po obronie | 8–16 h | [LC-28 #30](https://github.com/KLesiu/GymApp/issues/30) |
+| D07 | Dieta i posiłki | Plan posiłków trenera dostępny podopiecznemu | **TAK — M3** | 8–16 h, wstępnie | [D07 #35](https://github.com/KLesiu/GymApp/issues/35) |
 | D08 | Zdjęcia raportowe/sylwetki | Dokumentacja wizualna | Po obronie | 10–18 h | [LC-28 #30](https://github.com/KLesiu/GymApp/issues/30) |
 | D09 | Kopiowanie i udostępnianie planów | Przekazanie niezależnej kopii kodem | Opcjonalnie po rdzeniu | 6–10 h | [LC-29 #31](https://github.com/KLesiu/GymApp/issues/31) |
 | D10 | Google OAuth | Dodatkowy sposób logowania | Po obronie | 8–14 h | [LC-30 #32](https://github.com/KLesiu/GymApp/issues/32) |
