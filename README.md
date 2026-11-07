@@ -78,3 +78,17 @@ The API acceptance tests run against a real PostgreSQL container started with Do
 ## Implementation and thesis roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the phased completion plan, requirement mapping, module choices, and acceptance criteria. Track progress in [roadmap issue #33](https://github.com/KLesiu/GymApp/issues/33); record optional-module choices in [decision issue #2](https://github.com/KLesiu/GymApp/issues/2).
+
+## Nordic Coach design
+
+The selected mobile direction is **02 Nordic Coach**. Read [mobile/DESIGN.MD](mobile/DESIGN.MD) for the normative palette, shared components, five-tab navigation, the 36-screen map and corrected mockup references. [AGENTS.md](AGENTS.md) contains the implementation handoff.
+
+The author keeps the complete design at:
+
+```text
+C:\Users\kubax\Desktop\Inżynierka\Inżynierka Design
+```
+
+This local asset location is for the implementing agent, not a build or runtime dependency. A remote environment needs a supplied copy of the references. Shared UI, navigation, Start and Profile are tracked in [#36](https://github.com/KLesiu/GymApp/issues/36), feature-specific design requirements are recorded in their issues, and final visual acceptance remains in [#22](https://github.com/KLesiu/GymApp/issues/22).
+
+The documentation describes the target UI; it is not evidence that the redesign has been implemented. Diet D07 is approved; public ranking D03, full PL/EN D02 and the other optional modules retain their separate scope decisions.

@@ -47,3 +47,15 @@ Moduły powyżej wynikają z porównania zachowań systemu referencyjnego; estym
 | Termin i dostępność | Uzupełnić termin oddania, godziny tygodniowo i dostęp do uczestników badania. | [LC-00 #2](https://github.com/KLesiu/GymApp/issues/2) |
 
 Płatności, migracja rzeczywistych danych źródła, pełna synchronizacja offline, sprzęt/warianty ćwiczenia i pełny webowy dziennik nie są częścią bazowego zobowiązania. Można je rozważyć w odrębnej zmianie zakresu.
+
+## Zapisany kierunek designu — Nordic Coach
+
+Autor wybrał **02 Nordic Coach** dla aplikacji mobilnej i przekazał atlas oraz plansze szczegółowe 36 ekranów. Docelową specyfikacją jest [mobile/DESIGN.MD](../../mobile/DESIGN.MD): chłodne jasne tła, błękitne powierzchnie, granatowy tekst i niebieskie CTA, z ustalonymi tokenami oraz korektami rozbieżności makiet.
+
+- Nawigacja główna: **Start · Trening · Postępy · Trener · Profil**.
+- Trening: **Plany · Ćwiczenia · Siłownie**.
+- Trener: **Dieta · Raporty · Współpraca**; funkcje raportowe wymagają aktywnej współpracy.
+- Komplet designu według informacji autora: `C:\Users\kubax\Desktop\Inżynierka\Inżynierka Design`.
+- Bazowe wdrożenie tokenów, nawigacji, Start i Profilu: [#36](https://github.com/KLesiu/GymApp/issues/36). Końcowy odbiór UX pozostaje w #22. #36 wymaga oszacowania po przeglądzie współdzielonych komponentów; wcześniejsza wycena roadmapy nie została automatycznie zwiększona.
+- Wybór wyglądu nie zatwierdza D03 (ranking i profil publiczny), D02 (pełne PL/EN), D06 (notatki/cele), D08 (zdjęcia) ani pozostałych dodatków. Dieta D07 pozostaje zatwierdzona. Warianty warunkowe z makiet są oznaczone w specyfikacji.
+- Makiety są koncepcją; ich wartości i daty są przykładowe. Implementacja zachowuje wymagania API, wersjonowanie raportów i kontekst porównywania wyników.
